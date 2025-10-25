@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles, Users, Activity, Shield, Camera, Lock } from 'lucide-react';
 import { Logo } from '@/components/Logo';
 import heroBg from '@/assets/hero-bg.png';
+import heroTitle from '@/assets/hero-title.png';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -53,9 +54,11 @@ const Index = () => {
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
             {/* Text Column */}
             <div className="space-y-6">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
-                Let's Go out!
-              </h1>
+              <img 
+                src={heroTitle} 
+                alt="Let's Go out!" 
+                className="w-full max-w-[500px] h-auto drop-shadow-2xl"
+              />
               <h2 className="text-lg sm:text-xl text-white/90 leading-relaxed drop-shadow-md">
                 O app para quem quer viver mais, encontrar pessoas com os mesmos interesses, 
                 aprender algo novo e se manter em movimento.
