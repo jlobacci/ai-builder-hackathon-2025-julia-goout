@@ -378,6 +378,7 @@ export type Database = {
           last_message_id: number | null
           last_message_sender_id: string | null
           title: string | null
+          unread_count_for_me: number | null
         }
         Insert: {
           author_id?: string | null
@@ -387,6 +388,7 @@ export type Database = {
           last_message_id?: never
           last_message_sender_id?: never
           title?: string | null
+          unread_count_for_me?: never
         }
         Update: {
           author_id?: string | null
@@ -396,11 +398,32 @@ export type Database = {
           last_message_id?: never
           last_message_sender_id?: never
           title?: string | null
+          unread_count_for_me?: never
         }
         Relationships: [
           {
             foreignKeyName: "invites_author_id_fkey"
             columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      v_people_threads: {
+        Row: {
+          last_invite_id: number | null
+          last_message_at: string | null
+          last_message_body: string | null
+          last_message_sender_id: string | null
+          person_avatar: string | null
+          person_id: string | null
+          person_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["last_message_sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
