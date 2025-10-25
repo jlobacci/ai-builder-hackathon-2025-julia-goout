@@ -213,10 +213,7 @@ const Onboarding: React.FC = () => {
     setLoading(false);
 
     await new Promise(resolve => setTimeout(resolve, 800));
-    setCurrentStep(3);
-  };
-
-  const handleStep2Skip = () => {
+    setCpfChecked(false);
     setCurrentStep(3);
   };
 
@@ -610,17 +607,6 @@ const Onboarding: React.FC = () => {
               </Button>
 
               <div className="flex gap-2">
-                {currentStep === 2 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={handleStep2Skip}
-                    disabled={loading}
-                  >
-                    Pular por enquanto
-                  </Button>
-                )}
-
                 {currentStep === 1 && (
                   <Button
                     type="button"
@@ -650,7 +636,7 @@ const Onboarding: React.FC = () => {
                     disabled={loading || uploading || checkingPhoto || !formData.avatar_url}
                     className="bg-[#B6463A] hover:bg-[#A23F35] text-white"
                   >
-                    {loading ? "Finalizando..." : "Concluir"}
+                    {loading ? "Finalizando..." : "Finalizar cadastro"}
                   </Button>
                 )}
               </div>
