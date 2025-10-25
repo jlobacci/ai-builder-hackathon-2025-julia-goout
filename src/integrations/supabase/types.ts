@@ -123,6 +123,99 @@ export type Database = {
           },
         ]
       }
+      dm_messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: number
+          sender_id: string
+          thread_id: number
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: never
+          sender_id: string
+          thread_id: number
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: never
+          sender_id?: string
+          thread_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "dm_threads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dm_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "v_dm_threads_for_user"
+            referencedColumns: ["thread_id"]
+          },
+        ]
+      }
+      dm_reads: {
+        Row: {
+          message_id: number
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          message_id: number
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          message_id?: number
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dm_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "dm_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dm_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "v_dm_threads_for_user"
+            referencedColumns: ["last_message_id"]
+          },
+        ]
+      }
+      dm_threads: {
+        Row: {
+          created_at: string
+          id: number
+          user_a: string
+          user_b: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          user_a: string
+          user_b: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          user_a?: string
+          user_b?: string
+        }
+        Relationships: []
+      }
       hobbies: {
         Row: {
           id: number
@@ -741,6 +834,24 @@ export type Database = {
       }
     }
     Views: {
+      v_dm_threads_for_user: {
+        Row: {
+          last_message_at: string | null
+          last_message_body: string | null
+          last_message_id: number | null
+          last_message_sender_id: string | null
+          other_avatar: string | null
+          other_display_name: string | null
+          other_handle: string | null
+          other_user_id: string | null
+          thread_created_at: string | null
+          thread_id: number | null
+          unread_count_for_me: number | null
+          user_a: string | null
+          user_b: string | null
+        }
+        Relationships: []
+      }
       v_invite_threads: {
         Row: {
           author_id: string | null
