@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles, Users, Activity, Shield, Camera, Lock } from 'lucide-react';
 import { Logo } from '@/components/Logo';
+import heroBg from '@/assets/hero-bg.png';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -43,22 +44,26 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-12 sm:py-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <section 
+        className="py-12 sm:py-20 relative bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      >
+        <div className="absolute inset-0 bg-[#5C1F1F]/40"></div>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
             {/* Text Column */}
             <div className="space-y-6">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#333333]">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
                 Let's Go out!
               </h1>
-              <h2 className="text-lg sm:text-xl text-[#6F6F6F] leading-relaxed">
+              <h2 className="text-lg sm:text-xl text-white/90 leading-relaxed drop-shadow-md">
                 O app para quem quer viver mais, encontrar pessoas com os mesmos interesses, 
                 aprender algo novo e se manter em movimento.
               </h2>
               <Button 
                 size="lg"
                 onClick={() => navigate('/auth')}
-                className="bg-[#B6463A] hover:bg-[#A23F35] text-white text-base sm:text-lg px-8 py-6 w-full sm:w-auto"
+                className="bg-white hover:bg-white/90 text-[#B6463A] text-base sm:text-lg px-8 py-6 w-full sm:w-auto font-bold"
                 aria-label="Comece a se conectar agora"
               >
                 Conecte-se com o mundo!
@@ -153,9 +158,13 @@ const Index = () => {
       </section>
 
       {/* Security Section */}
-      <section className="py-12 sm:py-20">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <Card className="border-none shadow-lg">
+      <section 
+        className="py-12 sm:py-20 relative bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${heroBg})` }}
+      >
+        <div className="absolute inset-0 bg-[#5C1F1F]/40"></div>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 relative z-10">
+          <Card className="border-none shadow-lg bg-white/95 backdrop-blur-sm">
             <CardContent className="p-8 sm:p-12 space-y-8">
               <div className="text-center space-y-4">
                 <h2 className="text-3xl sm:text-4xl font-bold text-[#333333]">
