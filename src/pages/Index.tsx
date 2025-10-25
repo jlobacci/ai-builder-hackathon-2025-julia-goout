@@ -61,7 +61,7 @@ const Index = () => {
                 className="bg-[#B6463A] hover:bg-[#A23F35] text-white text-base sm:text-lg px-8 py-6 w-full sm:w-auto"
                 aria-label="Comece a se conectar agora"
               >
-                ➡️ Teste agora e comece a se conectar
+                Conecte-se com o mundo!
               </Button>
             </div>
 
@@ -100,7 +100,7 @@ const Index = () => {
                     São esses lugares que despertam o convívio, a troca e a criatividade.
                   </p>
                   <p>
-                    O Let's Go ou nasceu para te tirar da rotina, te conectar com pessoas e te inspirar 
+                    O GoOut ou nasceu para te tirar da rotina, te conectar com pessoas e te inspirar 
                     a ocupar a cidade com propósito.
                   </p>
                   <p className="font-semibold text-[#333333]">
