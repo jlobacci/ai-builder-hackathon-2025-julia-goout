@@ -2,18 +2,29 @@ import React, { useState, useEffect } from 'react';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { z } from 'zod';
 
-const emailSchema = z.object({
+const authSchema = z.object({
   email: z.string().email({ message: 'E-mail inválido' }),
+  password: z.string().min(6, { message: 'Senha deve ter no mínimo 6 caracteres' })
+});
+
+const signUpSchema = authSchema.extend({
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"]
 });
 
 const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -44,7 +55,7 @@ const Auth: React.FC = () => {
     e.preventDefault();
 
     try {
-      emailSchema.parse({ email });
+      authSchema.parse({ email, password });
     } catch (error) {
       if (error instanceof z.ZodError) {
         toast.error(error.errors[0].message);
@@ -54,42 +65,49 @@ const Auth: React.FC = () => {
 
     setLoading(true);
 
-    // Cria usuário automaticamente sem verificação de email
-    const randomPassword = Math.random().toString(36).slice(-16);
-    const { data, error } = await supabase.auth.signUp({
+    const { error } = await supabase.auth.signInWithPassword({
       email,
-      password: randomPassword,
-      options: {
-        emailRedirectTo: `${window.location.origin}/onboarding`,
-        data: {
-          auto_created: true,
-        },
-      },
+      password
     });
 
-    if (error && error.message.includes('already registered')) {
-      // Se já existe, faz login
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password: randomPassword,
-      });
-      
-      if (signInError) {
-        // Tenta criar com nova senha
-        const newPassword = Math.random().toString(36).slice(-16);
-        await supabase.auth.signUp({
-          email,
-          password: newPassword,
-        });
-      }
-    } else if (error) {
+    if (error) {
       toast.error(error.message);
       setLoading(false);
       return;
     }
 
     setLoading(false);
-    navigate('/onboarding');
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    try {
+      signUpSchema.parse({ email, password, confirmPassword });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        toast.error(error.errors[0].message);
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/onboarding`
+      }
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(false);
   };
 
 
@@ -104,26 +122,86 @@ const Auth: React.FC = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSignIn} className="mt-8 space-y-6">
-          <div>
-            <Input
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full"
-            />
-          </div>
+        <Tabs defaultValue="signin" className="mt-8">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="signin">Entrar</TabsTrigger>
+            <TabsTrigger value="signup">Criar conta</TabsTrigger>
+          </TabsList>
 
-          <Button
-            type="submit"
-            className="w-full btn-primary"
-            disabled={loading}
-          >
-            {loading ? 'Enviando...' : 'Entrar com e-mail'}
-          </Button>
-        </form>
+          <TabsContent value="signin">
+            <form onSubmit={handleSignIn} className="space-y-6">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? 'Entrando...' : 'Entrar'}
+              </Button>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="signup">
+            <form onSubmit={handleSignUp} className="space-y-6">
+              <div>
+                <Input
+                  type="email"
+                  placeholder="seu@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Senha (mínimo 6 caracteres)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Confirme a senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={loading}
+              >
+                {loading ? 'Criando conta...' : 'Criar conta'}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

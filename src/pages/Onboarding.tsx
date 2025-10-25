@@ -32,7 +32,7 @@ const onboardingSchema = z.object({
 });
 
 const Onboarding: React.FC = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showCpfModal, setShowCpfModal] = useState(false);
@@ -51,8 +51,14 @@ const Onboarding: React.FC = () => {
   });
 
   React.useEffect(() => {
-    loadHobbies();
-  }, []);
+    if (!authLoading && !user) {
+      navigate('/auth');
+      return;
+    }
+    if (user) {
+      loadHobbies();
+    }
+  }, [user, authLoading, navigate]);
 
   const loadHobbies = async () => {
     try {
@@ -161,6 +167,18 @@ const Onboarding: React.FC = () => {
   const handleFinishNow = () => {
     setShowCpfModal(false);
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
