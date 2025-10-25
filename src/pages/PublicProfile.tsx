@@ -34,11 +34,25 @@ const PublicProfile: React.FC = () => {
   }, [handle, user]);
 
   const loadProfile = async () => {
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('handle', handle)
-      .maybeSingle();
+    let profileData: any = null;
+
+    // Se não há handle na URL, carregar o perfil do usuário logado
+    if (!handle && user) {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      profileData = data;
+    } else if (handle) {
+      // Carregar perfil pelo handle
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('handle', handle)
+        .maybeSingle();
+      profileData = data;
+    }
 
     if (!profileData) {
       setLoading(false);
