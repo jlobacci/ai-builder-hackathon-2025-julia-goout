@@ -378,7 +378,6 @@ export type Database = {
           last_message_id: number | null
           last_message_sender_id: string | null
           title: string | null
-          unread_count_for_me: number | null
         }
         Insert: {
           author_id?: string | null
@@ -388,7 +387,6 @@ export type Database = {
           last_message_id?: never
           last_message_sender_id?: never
           title?: string | null
-          unread_count_for_me?: never
         }
         Update: {
           author_id?: string | null
@@ -398,7 +396,6 @@ export type Database = {
           last_message_id?: never
           last_message_sender_id?: never
           title?: string | null
-          unread_count_for_me?: never
         }
         Relationships: [
           {
