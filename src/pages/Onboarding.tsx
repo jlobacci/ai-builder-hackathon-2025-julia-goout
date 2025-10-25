@@ -111,7 +111,7 @@ const Onboarding: React.FC = () => {
   };
 
   const savePartialProfile = async () => {
-    if (!user) return;
+    if (!user) return false;
 
     try {
       const profileData = {
@@ -133,7 +133,7 @@ const Onboarding: React.FC = () => {
         .select("user_id")
         .eq("handle", formData.handle)
         .neq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (existingProfile) {
         toast.error("Este apelido já está em uso");
@@ -146,9 +146,20 @@ const Onboarding: React.FC = () => {
         throw profileError;
       }
 
-      // Delete old hobbies and insert new ones
+      // Only save hobbies if there are any selected
       if (selectedHobbies.length > 0) {
-        await supabase.from("user_hobbies").delete().eq("user_id", user.id);
+        // First, delete existing hobbies
+        const { error: deleteError } = await supabase
+          .from("user_hobbies")
+          .delete()
+          .eq("user_id", user.id);
+
+        if (deleteError) {
+          console.error("Erro ao deletar hobbies antigos:", deleteError);
+        }
+
+        // Wait a bit to ensure delete completed
+        await new Promise(resolve => setTimeout(resolve, 100));
 
         const userHobbiesData = selectedHobbies.map((hobbyId) => ({
           user_id: user.id,
@@ -156,7 +167,14 @@ const Onboarding: React.FC = () => {
           level: "iniciante",
         }));
 
-        await supabase.from("user_hobbies").insert(userHobbiesData);
+        const { error: hobbiesError } = await supabase
+          .from("user_hobbies")
+          .insert(userHobbiesData);
+
+        if (hobbiesError) {
+          console.error("Erro ao inserir hobbies:", hobbiesError);
+          // Don't block the flow if hobbies fail
+        }
       }
 
       return true;
@@ -204,24 +222,34 @@ const Onboarding: React.FC = () => {
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result as string);
-        setShowCropper(true);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    console.log("Arquivo selecionado:", file.name, file.type, file.size);
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      console.log("Imagem carregada, abrindo cropper");
+      setSelectedImage(reader.result as string);
+      setShowCropper(true);
+    };
+    reader.onerror = (error) => {
+      console.error("Erro ao ler arquivo:", error);
+      toast.error("Erro ao carregar imagem");
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCropComplete = async (croppedImage: Blob) => {
     if (!user) return;
 
+    console.log("Iniciando upload da imagem cortada");
     setShowCropper(false);
     setUploading(true);
 
     try {
       const fileName = `${user.id}_${Date.now()}.jpg`;
+      console.log("Fazendo upload para:", fileName);
+      
       const { error: uploadError, data } = await supabase.storage
         .from("media-avatars")
         .upload(fileName, croppedImage, {
@@ -229,12 +257,17 @@ const Onboarding: React.FC = () => {
           upsert: true,
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Erro no upload:", uploadError);
+        throw uploadError;
+      }
 
+      console.log("Upload concluído, obtendo URL pública");
       const { data: { publicUrl } } = supabase.storage
         .from("media-avatars")
         .getPublicUrl(fileName);
 
+      console.log("URL pública obtida:", publicUrl);
       setFormData({ ...formData, avatar_url: publicUrl });
       toast.success("Foto enviada com sucesso!");
     } catch (error: any) {
@@ -507,8 +540,8 @@ const Onboarding: React.FC = () => {
               {/* STEP 3 - Foto */}
               {currentStep === 3 && (
                 <div className="space-y-6">
-                  <div className="text-center">
-                    <Avatar className="w-32 h-32 mx-auto mb-4">
+                  <div className="text-center space-y-4">
+                    <Avatar className="w-32 h-32 mx-auto">
                       {formData.avatar_url ? (
                         <AvatarImage src={formData.avatar_url} alt="Avatar" />
                       ) : (
@@ -526,29 +559,30 @@ const Onboarding: React.FC = () => {
                       id="avatar-upload"
                       disabled={uploading}
                     />
-                    <Label htmlFor="avatar-upload">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={uploading}
-                        onClick={() => document.getElementById("avatar-upload")?.click()}
-                        className="cursor-pointer"
-                      >
-                        {uploading ? (
-                          <>
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            Enviando...
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="w-4 h-4 mr-2" />
-                            Escolher foto
-                          </>
-                        )}
-                      </Button>
-                    </Label>
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={uploading}
+                      onClick={() => {
+                        console.log("Botão clicado, abrindo seletor de arquivo");
+                        document.getElementById("avatar-upload")?.click();
+                      }}
+                    >
+                      {uploading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Enviando...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="w-4 h-4 mr-2" />
+                          Escolher foto
+                        </>
+                      )}
+                    </Button>
 
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-sm text-muted-foreground">
                       {formData.avatar_url
                         ? "Foto selecionada com sucesso!"
                         : "Você pode adicionar uma foto agora ou depois"}
