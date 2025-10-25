@@ -270,24 +270,27 @@ const Onboarding: React.FC = () => {
 
       console.log("URL pública obtida:", publicUrl);
       setFormData({ ...formData, avatar_url: publicUrl });
-      toast.success("Foto enviada com sucesso!");
+      setUploading(false);
+      
+      // Iniciar validação da foto automaticamente
+      setCheckingPhoto(true);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      setCheckingPhoto(false);
+      setPhotoChecked(true);
+      toast.success("Foto validada com sucesso!");
+      
+      // Aguardar um pouco para mostrar o check antes de habilitar o botão
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setPhotoChecked(false); // Limpar para mostrar o botão
+      
     } catch (error: any) {
       console.error("Erro ao fazer upload:", error);
       toast.error("Falha ao enviar foto. Tente novamente.");
-    } finally {
       setUploading(false);
     }
   };
 
   const handleComplete = async () => {
-    if (formData.avatar_url) {
-      setCheckingPhoto(true);
-      await new Promise(resolve => setTimeout(resolve, 1800));
-      setCheckingPhoto(false);
-      setPhotoChecked(true);
-      await new Promise(resolve => setTimeout(resolve, 800));
-    }
-
     setLoading(true);
     const saved = await savePartialProfile();
     setLoading(false);
@@ -644,7 +647,7 @@ const Onboarding: React.FC = () => {
                   <Button
                     type="button"
                     onClick={handleComplete}
-                    disabled={loading || uploading}
+                    disabled={loading || uploading || checkingPhoto || !formData.avatar_url}
                     className="bg-[#B6463A] hover:bg-[#A23F35] text-white"
                   >
                     {loading ? "Finalizando..." : "Concluir"}
