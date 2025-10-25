@@ -28,6 +28,7 @@ import { ProfileCard } from './ProfileCard';
 import { UpcomingEvents } from './UpcomingEvents';
 import { NotificationsDropdown } from './NotificationsDropdown';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
+import { Logo } from './Logo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -89,7 +90,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             onClick={() => navigate('/feed')}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity lg:justify-start justify-center"
           >
-            <span className="text-2xl font-bold text-primary">goOut</span>
+            <Logo size="md" />
           </button>
 
           {/* Right side - Navigation + Profile */}

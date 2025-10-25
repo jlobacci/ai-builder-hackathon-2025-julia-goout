@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles, Users, Activity, Shield, Camera, Lock } from 'lucide-react';
+import { Logo } from '@/components/Logo';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -29,8 +30,8 @@ const Index = () => {
       <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="text-2xl font-bold text-[#B6463A]">goOut</div>
-            <Button 
+            <Logo size="md" />
+            <Button
               variant="outline" 
               onClick={() => navigate('/auth')}
               className="border-[#B6463A] text-[#B6463A] hover:bg-[#FCE9E7]"
@@ -210,7 +211,7 @@ const Index = () => {
       <footer className="bg-white border-t">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-2xl font-bold text-[#B6463A]">goOut</div>
+            <Logo size="md" />
             <div className="flex flex-wrap gap-6 text-sm text-[#6F6F6F]">
               <a href="/privacy" className="hover:text-[#B6463A] transition-colors">
                 Política de Privacidade
