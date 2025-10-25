@@ -2,50 +2,267 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle, MapPin } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle, MapPin, Star, MessageCircle, UserPlus, UserCheck, X } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const PublicProfile: React.FC = () => {
   const { handle } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
+  const [ratings, setRatings] = useState<any>(null);
+  const [hobbies, setHobbies] = useState<any[]>([]);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [myReview, setMyReview] = useState<any>(null);
+  const [connection, setConnection] = useState<any>(null);
+  const [outs, setOuts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reviewStars, setReviewStars] = useState(5);
+  const [reviewBody, setReviewBody] = useState('');
 
   useEffect(() => {
     loadProfile();
-  }, [handle]);
+  }, [handle, user]);
 
   const loadProfile = async () => {
-    const { data } = await supabase
+    const { data: profileData } = await supabase
       .from('profiles')
       .select('*')
       .eq('handle', handle)
       .maybeSingle();
 
-    if (data) {
-      setProfile(data);
+    if (!profileData) {
+      setLoading(false);
+      return;
     }
+
+    setProfile(profileData);
+
+    // Load ratings
+    const { data: ratingsData } = await supabase
+      .from('v_profile_ratings')
+      .select('*')
+      .eq('user_id', profileData.user_id)
+      .maybeSingle();
+    setRatings(ratingsData);
+
+    // Load hobbies
+    const { data: hobbiesData } = await supabase
+      .from('user_hobbies')
+      .select('*, hobbies(*)')
+      .eq('user_id', profileData.user_id);
+    setHobbies(hobbiesData || []);
+
+    // Load reviews
+    const { data: reviewsData } = await supabase
+      .from('reviews')
+      .select('*, reviewer:profiles!reviews_reviewer_id_fkey(display_name, avatar_url)')
+      .eq('reviewee_id', profileData.user_id)
+      .order('created_at', { ascending: false });
+    setReviews(reviewsData || []);
+
+    // Load my review if logged in
+    if (user && user.id !== profileData.user_id) {
+      const { data: myReviewData } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('reviewee_id', profileData.user_id)
+        .eq('reviewer_id', user.id)
+        .maybeSingle();
+      
+      if (myReviewData) {
+        setMyReview(myReviewData);
+        setReviewStars(myReviewData.stars);
+        setReviewBody(myReviewData.body || '');
+      }
+    }
+
+    // Load connection status
+    if (user && user.id !== profileData.user_id) {
+      const { data: connData } = await supabase
+        .from('connections')
+        .select('*')
+        .or(`and(requester_id.eq.${user.id},target_id.eq.${profileData.user_id}),and(requester_id.eq.${profileData.user_id},target_id.eq.${user.id})`)
+        .maybeSingle();
+      setConnection(connData);
+    }
+
+    // Load outs
+    const { data: outsData } = await supabase
+      .from('invites')
+      .select('*, hobbies(*)')
+      .eq('author_id', profileData.user_id)
+      .order('created_at', { ascending: false });
+    setOuts(outsData || []);
+
     setLoading(false);
   };
 
-  const handleViewOuts = () => {
-    // Filter outs by this author
-    navigate('/outs');
+  const handleSaveReview = async () => {
+    if (!user || !profile) return;
+
+    const reviewData = {
+      reviewee_id: profile.user_id,
+      reviewer_id: user.id,
+      stars: reviewStars,
+      body: reviewBody,
+    };
+
+    if (myReview) {
+      const { error } = await supabase
+        .from('reviews')
+        .update(reviewData)
+        .eq('id', myReview.id);
+      
+      if (error) {
+        toast.error('Erro ao atualizar avaliação');
+        return;
+      }
+      toast.success('Avaliação atualizada');
+    } else {
+      const { error } = await supabase
+        .from('reviews')
+        .insert(reviewData);
+      
+      if (error) {
+        toast.error('Erro ao salvar avaliação');
+        return;
+      }
+      toast.success('Avaliação enviada');
+    }
+
+    loadProfile();
   };
 
-  const handleLeaveComment = () => {
-    toast('Em breve', {
-      description: 'A funcionalidade de comentários estará disponível em breve.',
-    });
+  const handleDeleteReview = async () => {
+    if (!myReview) return;
+
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', myReview.id);
+    
+    if (error) {
+      toast.error('Erro ao remover avaliação');
+      return;
+    }
+
+    toast.success('Avaliação removida');
+    setMyReview(null);
+    setReviewStars(5);
+    setReviewBody('');
+    loadProfile();
+  };
+
+  const handleConnect = async () => {
+    if (!user || !profile) return;
+
+    const { error } = await supabase
+      .from('connections')
+      .insert({
+        requester_id: user.id,
+        target_id: profile.user_id,
+        status: 'pendente',
+      });
+    
+    if (error) {
+      toast.error('Erro ao enviar pedido');
+      return;
+    }
+
+    toast.success('Pedido de conexão enviado');
+    loadProfile();
+  };
+
+  const handleCancelConnection = async () => {
+    if (!connection) return;
+
+    const { error } = await supabase
+      .from('connections')
+      .delete()
+      .eq('id', connection.id);
+    
+    if (error) {
+      toast.error('Erro ao cancelar pedido');
+      return;
+    }
+
+    toast.success('Pedido cancelado');
+    setConnection(null);
+  };
+
+  const handleAcceptConnection = async () => {
+    if (!connection) return;
+
+    const { error } = await supabase
+      .from('connections')
+      .update({ status: 'aceita' })
+      .eq('id', connection.id);
+    
+    if (error) {
+      toast.error('Erro ao aceitar conexão');
+      return;
+    }
+
+    toast.success('Conexão aceita');
+    loadProfile();
+  };
+
+  const handleRejectConnection = async () => {
+    if (!connection) return;
+
+    const { error } = await supabase
+      .from('connections')
+      .update({ status: 'recusada' })
+      .eq('id', connection.id);
+    
+    if (error) {
+      toast.error('Erro ao recusar conexão');
+      return;
+    }
+
+    toast.success('Conexão recusada');
+    loadProfile();
+  };
+
+  const renderStars = (stars: number, count?: number) => {
+    const fullStars = Math.floor(stars);
+    const hasHalfStar = stars % 1 >= 0.5;
+    
+    return (
+      <div className="flex items-center gap-1">
+        {[...Array(5)].map((_, i) => (
+          <Star
+            key={i}
+            className={`w-4 h-4 ${
+              i < fullStars
+                ? 'fill-primary text-primary'
+                : i === fullStars && hasHalfStar
+                ? 'fill-primary/50 text-primary'
+                : 'text-muted-foreground'
+            }`}
+          />
+        ))}
+        {count !== undefined && (
+          <span className="text-sm text-muted-foreground ml-1">({count})</span>
+        )}
+      </div>
+    );
   };
 
   if (loading) {
     return (
       <Layout>
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto p-4">
           <p className="text-center text-muted-foreground">Carregando...</p>
         </div>
       </Layout>
@@ -55,85 +272,296 @@ const PublicProfile: React.FC = () => {
   if (!profile) {
     return (
       <Layout>
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-6xl mx-auto p-4">
           <p className="text-center text-muted-foreground">Perfil não encontrado</p>
         </div>
       </Layout>
     );
   }
 
+  const isOwnProfile = user?.id === profile.user_id;
+
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto space-y-6">
-        <Card>
-          <CardHeader>
-            <div className="flex items-start gap-6">
-              <Avatar className="w-24 h-24">
-                <AvatarImage src={profile.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
-                  {profile.display_name?.[0] || 'U'}
-                </AvatarFallback>
-              </Avatar>
+      <div className="max-w-6xl mx-auto p-4">
+        <div className="grid lg:grid-cols-[300px_1fr] gap-6">
+          {/* Left sidebar */}
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex flex-col items-center text-center space-y-4">
+                  <Avatar className="w-32 h-32">
+                    <AvatarImage src={profile.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-4xl">
+                      {profile.display_name?.[0] || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
 
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-3xl font-bold">{profile.display_name}</h1>
-                  {profile.verified && (
-                    <span className="badge-verified">
-                      <CheckCircle className="w-4 h-4" />
-                      Verificado
-                    </span>
+                  <div className="w-full">
+                    <div className="flex items-center justify-center gap-2 mb-1">
+                      <h1 className="text-2xl font-bold">{profile.display_name}</h1>
+                      {profile.verified && (
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      )}
+                    </div>
+                    <p className="text-muted-foreground mb-3">@{profile.handle}</p>
+
+                    {ratings && (
+                      <div className="flex justify-center mb-3">
+                        {renderStars(ratings.avg_stars || 0, ratings.reviews_count || 0)}
+                      </div>
+                    )}
+
+                    {(profile.city || profile.state || profile.country) && (
+                      <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-4">
+                        <MapPin className="w-4 h-4" />
+                        <span>
+                          {[profile.city, profile.state, profile.country]
+                            .filter(Boolean)
+                            .join(', ')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {!isOwnProfile && user && (
+                    <div className="w-full space-y-2">
+                      {!connection && (
+                        <Button onClick={handleConnect} className="w-full" size="sm">
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Se conectar
+                        </Button>
+                      )}
+                      
+                      {connection?.status === 'pendente' && connection.requester_id === user.id && (
+                        <div className="space-y-2">
+                          <Badge variant="outline" className="w-full justify-center">
+                            Pedido enviado
+                          </Badge>
+                          <Button onClick={handleCancelConnection} variant="outline" size="sm" className="w-full">
+                            <X className="w-4 h-4 mr-2" />
+                            Cancelar
+                          </Button>
+                        </div>
+                      )}
+
+                      {connection?.status === 'pendente' && connection.target_id === user.id && (
+                        <div className="space-y-2">
+                          <Button onClick={handleAcceptConnection} size="sm" className="w-full">
+                            Aceitar
+                          </Button>
+                          <Button onClick={handleRejectConnection} variant="outline" size="sm" className="w-full">
+                            Recusar
+                          </Button>
+                        </div>
+                      )}
+
+                      {connection?.status === 'aceita' && (
+                        <Badge className="w-full justify-center bg-green-600">
+                          <UserCheck className="w-4 h-4 mr-2" />
+                          Conectado
+                        </Badge>
+                      )}
+
+                      <Button
+                        onClick={() => navigate(`/messages?person_id=${profile.user_id}`)}
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Enviar mensagem
+                      </Button>
+                    </div>
+                  )}
+
+                  {isOwnProfile && (
+                    <Button onClick={() => navigate('/settings/profile')} variant="outline" size="sm" className="w-full">
+                      Editar perfil
+                    </Button>
                   )}
                 </div>
-                <p className="text-muted-foreground mb-2">@{profile.handle}</p>
+              </CardContent>
+            </Card>
+          </div>
 
-                {(profile.city || profile.state || profile.country) && (
-                  <div className="flex items-center gap-1 text-muted-foreground mb-4">
-                    <MapPin className="w-4 h-4" />
-                    <span>
-                      {[profile.city, profile.state, profile.country]
-                        .filter(Boolean)
-                        .join(', ')}
-                    </span>
+          {/* Right content */}
+          <div>
+            <Tabs defaultValue="sobre" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="sobre">Sobre</TabsTrigger>
+                <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
+                <TabsTrigger value="outs">Outs Organizados</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="sobre" className="space-y-4">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Sobre</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {profile.bio ? (
+                      <p className="whitespace-pre-wrap">{profile.bio}</p>
+                    ) : (
+                      <p className="text-muted-foreground italic">Nenhuma bio adicionada.</p>
+                    )}
+
+                    {hobbies.length > 0 && (
+                      <div>
+                        <h3 className="font-semibold mb-2">Hobbies</h3>
+                        <div className="flex flex-wrap gap-2">
+                          {hobbies.map((uh) => (
+                            <Badge key={uh.hobby_id} variant="secondary">
+                              {uh.hobbies.name}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="avaliacoes" className="space-y-4">
+                {user && !isOwnProfile && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Sua Avaliação</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Estrelas</label>
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <button
+                              key={s}
+                              type="button"
+                              onClick={() => setReviewStars(s)}
+                              className="focus:outline-none"
+                            >
+                              <Star
+                                className={`w-8 h-8 ${
+                                  s <= reviewStars ? 'fill-primary text-primary' : 'text-muted-foreground'
+                                }`}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium mb-2">Comentário</label>
+                        <Textarea
+                          value={reviewBody}
+                          onChange={(e) => setReviewBody(e.target.value)}
+                          placeholder="Escreva sua avaliação..."
+                          rows={4}
+                        />
+                      </div>
+
+                      <div className="flex gap-2">
+                        <Button onClick={handleSaveReview}>
+                          {myReview ? 'Atualizar avaliação' : 'Salvar avaliação'}
+                        </Button>
+                        {myReview && (
+                          <Button onClick={handleDeleteReview} variant="outline">
+                            Remover avaliação
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Todas as Avaliações</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {reviews.length === 0 ? (
+                      <p className="text-muted-foreground italic">Nenhuma avaliação ainda.</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {reviews.map((review) => (
+                          <div key={review.id} className="border-b pb-4 last:border-0">
+                            <div className="flex items-start gap-3">
+                              <Avatar className="w-10 h-10">
+                                <AvatarImage src={review.reviewer?.avatar_url} />
+                                <AvatarFallback>
+                                  {review.reviewer?.display_name?.[0] || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <span className="font-semibold">{review.reviewer?.display_name}</span>
+                                  <span className="text-sm text-muted-foreground">
+                                    {formatDistanceToNow(new Date(review.created_at), {
+                                      addSuffix: true,
+                                      locale: ptBR,
+                                    })}
+                                  </span>
+                                </div>
+                                {renderStars(review.stars)}
+                                {review.body && <p className="mt-2">{review.body}</p>}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="outs" className="space-y-4">
+                {outs.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8">
+                      <p className="text-center text-muted-foreground italic">
+                        Nenhum Out organizado ainda.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {outs.map((out) => (
+                      <Card key={out.id} className="hover:shadow-lg transition-shadow">
+                        <CardHeader>
+                          <CardTitle className="text-lg">{out.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          {out.hobbies && (
+                            <Badge variant="secondary">{out.hobbies.name}</Badge>
+                          )}
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            {out.city && (
+                              <div className="flex items-center gap-1">
+                                <MapPin className="w-3 h-3" />
+                                {out.city}
+                              </div>
+                            )}
+                            <div>Modo: {out.mode}</div>
+                            <div>
+                              Vagas: {out.slots_taken || 0}/{out.slots}
+                            </div>
+                          </div>
+                          <Button
+                            onClick={() => navigate(`/out/${out.id}`)}
+                            variant="outline"
+                            size="sm"
+                            className="w-full mt-2"
+                          >
+                            Ver Out
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
                 )}
-
-                {profile.bio && (
-                  <p className="text-foreground mb-4">{profile.bio}</p>
-                )}
-
-                <Button onClick={handleViewOuts} className="btn-primary">
-                  Ver Outs deste perfil
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Experiências</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground italic">
-              Nenhuma experiência adicionada ainda.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Recomendações</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground italic mb-4">
-              Nenhuma recomendação ainda.
-            </p>
-            <Button onClick={handleLeaveComment} variant="outline">
-              Deixe um comentário
-            </Button>
-          </CardContent>
-        </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        </div>
       </div>
     </Layout>
   );
