@@ -49,12 +49,7 @@ const Index = () => {
             {/* Text Column */}
             <div className="space-y-6">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#333333]">
-               <p>
-                Let's
-               </p>
-                <p>
-                   Go out!
-                  </p>
+                Let's Go out!
               </h1>
               <h2 className="text-lg sm:text-xl text-[#6F6F6F] leading-relaxed">
                 O app para quem quer viver mais, encontrar pessoas com os mesmos interesses, 
@@ -66,7 +61,7 @@ const Index = () => {
                 className="bg-[#B6463A] hover:bg-[#A23F35] text-white text-base sm:text-lg px-8 py-6 w-full sm:w-auto"
                 aria-label="Comece a se conectar agora"
               >
-                ➡️ Teste agora e comece a se conectar
+                Conecte-se com o mundo!
               </Button>
             </div>
 
