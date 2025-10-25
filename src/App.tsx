@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Onboarding from "./pages/Onboarding";
 import Outs from "./pages/Outs";
 import CreateOut from "./pages/CreateOut";
+import EditOut from "./pages/EditOut";
 import OutDetail from "./pages/OutDetail";
 import OutChat from "./pages/OutChat";
 import MyOuts from "./pages/MyOuts";
@@ -31,7 +32,8 @@ const App = () => (
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/outs" element={<Outs />} />
             <Route path="/out/new" element={<CreateOut />} />
-            <Route path="/out/:id" element={<OutDetail />} />
+          <Route path="/out/:id" element={<OutDetail />} />
+          <Route path="/out/:id/edit" element={<EditOut />} />
             <Route path="/out/:id/chat" element={<OutChat />} />
             <Route path="/my-outs" element={<MyOuts />} />
             <Route path="/messages" element={<Messages />} />

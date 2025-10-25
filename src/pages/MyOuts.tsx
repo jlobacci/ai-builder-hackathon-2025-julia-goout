@@ -205,7 +205,7 @@ const MyOuts: React.FC = () => {
                           )}
                         </div>
                         <Button
-                          onClick={() => navigate(`/out/${out.id}`)}
+                          onClick={() => navigate(`/out/${out.id}/edit`)}
                           variant="ghost"
                           size="icon"
                           title="Editar Out"
