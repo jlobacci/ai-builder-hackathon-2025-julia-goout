@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -182,8 +183,10 @@ export const CalendarView: React.FC = () => {
   const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-6">
+    <Card>
+      <CardContent className="pt-6">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between mb-6">
         <Button onClick={previousMonth} variant="outline" size="sm" className="gap-2">
           <ChevronLeft className="w-4 h-4" />
           Mês anterior
@@ -298,6 +301,8 @@ export const CalendarView: React.FC = () => {
           );
         })}
       </div>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };

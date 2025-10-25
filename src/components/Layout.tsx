@@ -24,6 +24,7 @@ import {
   X
 } from 'lucide-react';
 import { ProfileCard } from './ProfileCard';
+import { UpcomingEvents } from './UpcomingEvents';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 
 interface LayoutProps {
@@ -67,6 +68,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/my-outs', icon: Calendar, label: 'Meus Outs' },
     { path: '/out/new', icon: PlusCircle, label: 'Criar Out' },
     { path: '/messages', icon: MessageCircle, label: 'Mensagens' },
+    { path: '/about', icon: Shield, label: 'Segurança' },
     { path: '/profile', icon: User, label: 'Perfil' },
   ];
 
@@ -203,6 +205,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <div className="pt-4 border-t">
                     <button
                       onClick={() => {
+                        navigate('/about');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent w-full"
+                    >
+                      <Shield className="w-5 h-5" />
+                      <span>Segurança</span>
+                    </button>
+                    <button
+                      onClick={() => {
                         navigate('/profile');
                         setMobileMenuOpen(false);
                       }}
@@ -244,9 +256,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           ) : (
             // Other pages - with sidebar (LinkedIn-style grid)
             <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-              {/* Left Sidebar - Profile Card (Desktop only) */}
-              <aside className="hidden lg:block">
+              {/* Left Sidebar - Profile Card + Upcoming Events (Desktop only) */}
+              <aside className="hidden lg:block space-y-4">
                 <ProfileCard />
+                <UpcomingEvents />
               </aside>
 
               {/* Main Content - Max width ~700px for optimal readability */}
