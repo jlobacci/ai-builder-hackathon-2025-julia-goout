@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Logo } from './Logo';
-import { Compass, Plus, Calendar, User, Info } from 'lucide-react';
+import { Compass, Plus, Calendar, MessageCircle, User, Info } from 'lucide-react';
 import { Separator } from './ui/separator';
 
 export const Sidebar: React.FC = () => {
@@ -9,6 +9,7 @@ export const Sidebar: React.FC = () => {
     { to: '/outs', label: 'Descobrir Outs', icon: Compass },
     { to: '/out/new', label: 'Criar Out', icon: Plus },
     { to: '/my-outs', label: 'Meus Outs', icon: Calendar },
+    { to: '/messages', label: 'Mensagens', icon: MessageCircle },
     { to: '/profile', label: 'Perfil', icon: User },
   ];
 

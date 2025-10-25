@@ -11,6 +11,7 @@ import CreateOut from "./pages/CreateOut";
 import OutDetail from "./pages/OutDetail";
 import OutChat from "./pages/OutChat";
 import MyOuts from "./pages/MyOuts";
+import Messages from "./pages/Messages";
 import PublicProfile from "./pages/PublicProfile";
 import About from "./pages/About";
 import NotFound from "./pages/NotFound";
@@ -33,6 +34,7 @@ const App = () => (
             <Route path="/out/:id" element={<OutDetail />} />
             <Route path="/out/:id/chat" element={<OutChat />} />
             <Route path="/my-outs" element={<MyOuts />} />
+            <Route path="/messages" element={<Messages />} />
             <Route path="/profile" element={<PublicProfile />} />
             <Route path="/u/:handle" element={<PublicProfile />} />
             <Route path="/about" element={<About />} />
