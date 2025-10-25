@@ -80,6 +80,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Fixed Top Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+          <div className="w-[260px] lg:block hidden" /> {/* Spacer for left column */}
           {/* Logo */}
           <button 
             onClick={() => navigate('/feed')}
@@ -89,7 +90,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </button>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1 flex-1 justify-center lg:justify-start lg:ml-12">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active = isActive(item.path);
@@ -234,7 +235,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </main>
           ) : (
             // Other pages - with sidebar
-            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-12">
               {/* Left Sidebar - Profile Card (Desktop only) */}
               <aside className="hidden lg:block">
                 <ProfileCard />
