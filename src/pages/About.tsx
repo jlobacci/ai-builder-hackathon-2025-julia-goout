@@ -1,7 +1,7 @@
-import React from 'react';
-import { Layout } from '@/components/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Shield, CheckCircle } from 'lucide-react';
+import React from "react";
+import { Layout } from "@/components/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Shield, CheckCircle } from "lucide-react";
 
 const About: React.FC = () => {
   return (
@@ -13,15 +13,12 @@ const About: React.FC = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              Sobre o goOut
-            </CardTitle>
+            <CardTitle className="flex items-center gap-2">Sobre o goOut</CardTitle>
           </CardHeader>
           <CardContent className="prose max-w-none">
             <p className="text-foreground leading-relaxed">
-              goOut conecta pessoas para fazer aquilo que realmente move a vida: praticar hobbies. 
-              Além do trabalho e da rotina, a felicidade está em viver. Encontre um hobbie, 
-              encontre um amigo, go out e viva a vida.
+              O goOut conecta pessoas para fazer aquilo que realmente move a vida: praticar hobbies. Além do trabalho e
+              da rotina, a felicidade está em viver. Encontre um hobbie, encontre um amigo, go out e viva a vida.
             </p>
           </CardContent>
         </Card>
