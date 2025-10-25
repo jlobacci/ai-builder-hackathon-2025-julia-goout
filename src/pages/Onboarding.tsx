@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ImageCropper } from "@/components/ImageCropper";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Shield, CheckCircle2, Upload, Loader2 } from "lucide-react";
+import { Shield, CheckCircle2, Upload, Loader2, X, Plus } from "lucide-react";
 import { z } from "zod";
 
 const onboardingSchema = z.object({
@@ -43,6 +43,8 @@ const Onboarding: React.FC = () => {
   const [showCropper, setShowCropper] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [otherHobbiesList, setOtherHobbiesList] = useState<string[]>([]);
+  const [currentOtherHobby, setCurrentOtherHobby] = useState("");
 
   const [formData, setFormData] = useState({
     display_name: "",
@@ -51,7 +53,6 @@ const Onboarding: React.FC = () => {
     state: "",
     city: "",
     bio: "",
-    other_hobbies: "",
     cpf: "",
     avatar_url: "",
   });
@@ -97,6 +98,18 @@ const Onboarding: React.FC = () => {
     return true;
   };
 
+  const addOtherHobby = () => {
+    const trimmed = currentOtherHobby.trim();
+    if (trimmed && !otherHobbiesList.includes(trimmed)) {
+      setOtherHobbiesList([...otherHobbiesList, trimmed]);
+      setCurrentOtherHobby("");
+    }
+  };
+
+  const removeOtherHobby = (hobby: string) => {
+    setOtherHobbiesList(otherHobbiesList.filter((h) => h !== hobby));
+  };
+
   const savePartialProfile = async () => {
     if (!user) return;
 
@@ -109,7 +122,7 @@ const Onboarding: React.FC = () => {
         state: formData.state,
         city: formData.city,
         bio: formData.bio,
-        other_hobbies: formData.other_hobbies,
+        other_hobbies: otherHobbiesList.join(", "),
         cpf: formData.cpf || null,
         avatar_url: formData.avatar_url || null,
       };
@@ -423,13 +436,47 @@ const Onboarding: React.FC = () => {
                   </div>
 
                   <div>
-                    <Label htmlFor="other_hobbies">Outros hobbies</Label>
-                    <Input
-                      id="other_hobbies"
-                      value={formData.other_hobbies}
-                      onChange={(e) => setFormData({ ...formData, other_hobbies: e.target.value })}
-                      placeholder="Escreva outros hobbies não listados..."
-                    />
+                    <Label>Outros hobbies</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input
+                        value={currentOtherHobby}
+                        onChange={(e) => setCurrentOtherHobby(e.target.value)}
+                        placeholder="Digite um hobby..."
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            addOtherHobby();
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        onClick={addOtherHobby}
+                        disabled={!currentOtherHobby.trim()}
+                        className="bg-[#B6463A] hover:bg-[#A23F35] text-white"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {otherHobbiesList.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {otherHobbiesList.map((hobby, index) => (
+                          <div
+                            key={index}
+                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-accent text-accent-foreground"
+                          >
+                            {hobby}
+                            <button
+                              type="button"
+                              onClick={() => removeOtherHobby(hobby)}
+                              className="hover:text-[#B6463A] transition-colors"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
