@@ -16,6 +16,7 @@ import { CheckCircle, MapPin, Star, MessageCircle, UserPlus, UserCheck, X, Uploa
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ImageCropper } from '@/components/ImageCropper';
 
 const PublicProfile: React.FC = () => {
   const { handle } = useParams();
@@ -41,6 +42,8 @@ const PublicProfile: React.FC = () => {
   });
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [tempAvatarPreview, setTempAvatarPreview] = useState<string>('');
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [allHobbies, setAllHobbies] = useState<any[]>([]);
   const [selectedHobbies, setSelectedHobbies] = useState<number[]>([]);
 
@@ -284,13 +287,28 @@ const PublicProfile: React.FC = () => {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setAvatarFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setAvatarPreview(reader.result as string);
+        setTempAvatarPreview(reader.result as string);
+        setCropDialogOpen(true);
       };
       reader.readAsDataURL(file);
     }
+    // Reset input
+    e.target.value = '';
+  };
+
+  const handleCropComplete = (croppedBlob: Blob) => {
+    const file = new File([croppedBlob], 'avatar.jpg', { type: 'image/jpeg' });
+    setAvatarFile(file);
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(croppedBlob);
+    
+    setCropDialogOpen(false);
   };
 
   const handleToggleHobby = (hobbyId: number) => {
@@ -309,8 +327,8 @@ const PublicProfile: React.FC = () => {
 
       // Upload avatar if changed
       if (avatarFile) {
-        const fileExt = avatarFile.name.split('.').pop();
-        const fileName = `${profile.user_id}-${Date.now()}.${fileExt}`;
+        const fileExt = 'jpg';
+        const fileName = `${profile.user_id}/${profile.user_id}-${Date.now()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
           .from('media-avatars')
@@ -318,6 +336,7 @@ const PublicProfile: React.FC = () => {
 
         if (uploadError) {
           toast.error('Erro ao fazer upload da foto');
+          console.error(uploadError);
           return;
         }
 
@@ -832,6 +851,14 @@ const PublicProfile: React.FC = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Image Cropper Dialog */}
+        <ImageCropper
+          image={tempAvatarPreview}
+          open={cropDialogOpen}
+          onClose={() => setCropDialogOpen(false)}
+          onCropComplete={handleCropComplete}
+        />
       </div>
     </Layout>
   );

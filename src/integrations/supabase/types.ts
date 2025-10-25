@@ -48,6 +48,13 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "applications_applicant_id_fkey"
+            columns: ["applicant_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "applications_invite_id_fkey"
             columns: ["invite_id"]
             isOneToOne: false
@@ -60,6 +67,59 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "v_invite_threads"
             referencedColumns: ["invite_id"]
+          },
+        ]
+      }
+      connections: {
+        Row: {
+          created_at: string | null
+          id: number
+          requester_id: string
+          status: string
+          target_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          requester_id: string
+          status?: string
+          target_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          requester_id?: string
+          status?: string
+          target_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connections_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "connections_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "connections_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "connections_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
           },
         ]
       }
@@ -193,6 +253,13 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
           {
+            foreignKeyName: "invites_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+          {
             foreignKeyName: "invites_hobby_id_fkey"
             columns: ["hobby_id"]
             isOneToOne: false
@@ -230,6 +297,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "message_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
             referencedColumns: ["user_id"]
           },
         ]
@@ -276,6 +350,13 @@ export type Database = {
             columns: ["sender_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
             referencedColumns: ["user_id"]
           },
         ]
@@ -334,6 +415,62 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          body: string | null
+          created_at: string | null
+          id: number
+          reviewee_id: string
+          reviewer_id: string
+          stars: number
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string | null
+          id?: number
+          reviewee_id: string
+          reviewer_id: string
+          stars: number
+        }
+        Update: {
+          body?: string | null
+          created_at?: string | null
+          id?: number
+          reviewee_id?: string
+          reviewer_id?: string
+          stars?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_reviewee_id_fkey"
+            columns: ["reviewee_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewee_id_fkey"
+            columns: ["reviewee_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "reviews_reviewer_id_fkey"
+            columns: ["reviewer_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       user_hobbies: {
         Row: {
           hobby_id: number
@@ -363,6 +500,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "user_hobbies_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
             referencedColumns: ["user_id"]
           },
         ]
@@ -405,6 +549,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "invites_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       v_people_threads: {
@@ -425,7 +576,22 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
           },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["last_message_sender_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
         ]
+      }
+      v_profile_ratings: {
+        Row: {
+          avg_stars: number | null
+          reviews_count: number | null
+          user_id: string | null
+        }
+        Relationships: []
       }
     }
     Functions: {
