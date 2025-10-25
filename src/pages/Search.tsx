@@ -130,7 +130,7 @@ export default function Search() {
       const searchPattern = `%${debouncedTerm}%`;
       
       let query = supabase
-        .from('profiles')
+        .from('v_public_profiles')
         .select(`
           user_id,
           display_name,

@@ -269,7 +269,7 @@ const Messages: React.FC = () => {
       // Load profiles for all senders
       const senderIds = [...new Set(data.map(m => m.sender_id))];
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('v_public_profiles')
         .select('user_id, display_name, avatar_url')
         .in('user_id', senderIds);
       
@@ -558,7 +558,7 @@ const Messages: React.FC = () => {
                                 const senderProfile = eventThreads.find(t => t.invite_id === selectedInviteId);
                                 // Navigate to profile (we need to fetch the handle first)
                                 supabase
-                                  .from('profiles')
+                                  .from('v_public_profiles')
                                   .select('handle')
                                   .eq('user_id', msg.sender_id)
                                   .single()
@@ -579,7 +579,7 @@ const Messages: React.FC = () => {
                                 className="text-xs text-muted-foreground px-3 cursor-pointer hover:underline"
                                 onClick={() => {
                                   supabase
-                                    .from('profiles')
+                                    .from('v_public_profiles')
                                     .select('handle')
                                     .eq('user_id', msg.sender_id)
                                     .single()
@@ -628,7 +628,7 @@ const Messages: React.FC = () => {
                               className="w-8 h-8 flex-shrink-0 avatar-clickable"
                               onClick={() => {
                                 supabase
-                                  .from('profiles')
+                                  .from('v_public_profiles')
                                   .select('handle')
                                   .eq('user_id', msg.sender_id)
                                   .single()

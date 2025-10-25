@@ -61,16 +61,42 @@ const PublicProfile: React.FC = () => {
 
     // Se não há handle na URL, carregar o perfil do usuário logado
     if (!handle && user) {
+      // Own profile: use profiles table to access all fields including sensitive data
       const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle();
       profileData = data;
-    } else if (handle) {
-      // Carregar perfil pelo handle
-      const { data } = await supabase
+    } else if (handle && user) {
+      // First check if this is the user's own profile by handle
+      const { data: checkOwnProfile } = await supabase
         .from('profiles')
+        .select('user_id')
+        .eq('handle', handle)
+        .maybeSingle();
+      
+      if (checkOwnProfile?.user_id === user.id) {
+        // Own profile: use profiles table
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('handle', handle)
+          .maybeSingle();
+        profileData = data;
+      } else {
+        // Other user's profile: use safe view (no sensitive data)
+        const { data } = await supabase
+          .from('v_public_profiles')
+          .select('*')
+          .eq('handle', handle)
+          .maybeSingle();
+        profileData = data;
+      }
+    } else if (handle && !user) {
+      // Not logged in: use safe view
+      const { data } = await supabase
+        .from('v_public_profiles')
         .select('*')
         .eq('handle', handle)
         .maybeSingle();
@@ -140,7 +166,7 @@ const PublicProfile: React.FC = () => {
         connectionsData.map(async (conn: any) => {
           const otherId = conn.requester_id === profileData.user_id ? conn.target_id : conn.requester_id;
           const { data: otherProfile } = await supabase
-            .from('profiles')
+            .from('v_public_profiles')
             .select('*')
             .eq('user_id', otherId)
             .maybeSingle();
@@ -163,7 +189,7 @@ const PublicProfile: React.FC = () => {
         const requestProfiles = await Promise.all(
           pendingData.map(async (req: any) => {
             const { data: requesterProfile } = await supabase
-              .from('profiles')
+              .from('v_public_profiles')
               .select('*')
               .eq('user_id', req.requester_id)
               .maybeSingle();

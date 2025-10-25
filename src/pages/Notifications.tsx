@@ -54,7 +54,7 @@ const Notifications: React.FC = () => {
       // Get sender names
       const senderIds = [...new Set(messages.map(m => m.sender_id))];
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('v_public_profiles')
         .select('user_id, display_name')
         .in('user_id', senderIds);
 

@@ -111,7 +111,7 @@ const Feed: React.FC = () => {
 
   const loadProfiles = async () => {
     const { data } = await supabase
-      .from('profiles')
+      .from('v_public_profiles')
       .select('user_id, display_name, handle, avatar_url')
       .order('display_name');
     if (data) setProfiles(data);
