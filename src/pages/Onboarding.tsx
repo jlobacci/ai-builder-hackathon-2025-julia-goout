@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,16 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ImageCropper } from "@/components/ImageCropper";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Shield, CheckCircle2, Upload, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const onboardingSchema = z.object({
@@ -34,10 +31,18 @@ const onboardingSchema = z.object({
 const Onboarding: React.FC = () => {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  
+  const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [showCpfModal, setShowCpfModal] = useState(false);
-  const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
+  const [checkingCpf, setCheckingCpf] = useState(false);
+  const [cpfChecked, setCpfChecked] = useState(false);
+  const [checkingPhoto, setCheckingPhoto] = useState(false);
+  const [photoChecked, setPhotoChecked] = useState(false);
+  const [selectedHobbies, setSelectedHobbies] = useState<number[]>([]);
   const [hobbies, setHobbies] = useState<any[]>([]);
+  const [showCropper, setShowCropper] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     display_name: "",
@@ -46,11 +51,12 @@ const Onboarding: React.FC = () => {
     state: "",
     city: "",
     bio: "",
+    other_hobbies: "",
     cpf: "",
     avatar_url: "",
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!authLoading && !user) {
       navigate('/auth');
       return;
@@ -64,52 +70,35 @@ const Onboarding: React.FC = () => {
     try {
       const { data, error } = await supabase.from("hobbies").select("*");
       if (error) {
-        console.error("Erro ao carregar hobbies:", error);
         toast.error("Erro ao carregar hobbies");
         return;
       }
       if (data) {
-        console.log("Hobbies carregados:", data);
         setHobbies(data);
       }
     } catch (error) {
-      console.error("Erro inesperado ao carregar hobbies:", error);
+      console.error("Erro ao carregar hobbies:", error);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("handleSubmit chamado", formData);
-
-    if (!formData.cpf) {
-      setShowCpfModal(true);
-      return;
+  const validateStep1 = () => {
+    if (!formData.display_name || formData.display_name.length < 2) {
+      toast.error("Nome deve ter pelo menos 2 caracteres");
+      return false;
     }
-
-    await completeOnboarding();
+    if (!formData.handle || formData.handle.length < 3) {
+      toast.error("Apelido deve ter pelo menos 3 caracteres");
+      return false;
+    }
+    if (/\s/.test(formData.handle)) {
+      toast.error("Apelido não pode conter espaços");
+      return false;
+    }
+    return true;
   };
 
-  const completeOnboarding = async (skipCpf = false) => {
-    if (!user) {
-      console.error("Usuário não autenticado");
-      toast.error("Você precisa estar autenticado");
-      return;
-    }
-
-    console.log("completeOnboarding chamado", { skipCpf, formData });
-
-    try {
-      const dataToValidate = skipCpf ? { ...formData, cpf: "" } : formData;
-      onboardingSchema.parse(dataToValidate);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        console.error("Erro de validação:", error.errors);
-        toast.error(error.errors[0].message);
-        return;
-      }
-    }
-
-    setLoading(true);
+  const savePartialProfile = async () => {
+    if (!user) return;
 
     try {
       const profileData = {
@@ -120,185 +109,477 @@ const Onboarding: React.FC = () => {
         state: formData.state,
         city: formData.city,
         bio: formData.bio,
-        cpf: skipCpf ? null : formData.cpf || null,
+        other_hobbies: formData.other_hobbies,
+        cpf: formData.cpf || null,
         avatar_url: formData.avatar_url || null,
       };
 
-      console.log("Inserindo perfil:", profileData);
+      // Check if handle already exists
+      const { data: existingProfile, error: checkError } = await supabase
+        .from("profiles")
+        .select("user_id")
+        .eq("handle", formData.handle)
+        .neq("user_id", user.id)
+        .single();
+
+      if (existingProfile) {
+        toast.error("Este apelido já está em uso");
+        return false;
+      }
+
       const { error: profileError } = await supabase.from("profiles").upsert(profileData);
 
       if (profileError) {
-        console.error("Erro ao inserir perfil:", profileError);
         throw profileError;
       }
 
-      // Insert user hobbies
+      // Delete old hobbies and insert new ones
       if (selectedHobbies.length > 0) {
+        await supabase.from("user_hobbies").delete().eq("user_id", user.id);
+
         const userHobbiesData = selectedHobbies.map((hobbyId) => ({
           user_id: user.id,
-          hobby_id: Number(hobbyId),
+          hobby_id: hobbyId,
           level: "iniciante",
         }));
 
-        console.log("Inserindo hobbies do usuário:", userHobbiesData);
-        const { error: hobbiesError } = await supabase.from("user_hobbies").insert(userHobbiesData);
-        
-        if (hobbiesError) {
-          console.error("Erro ao inserir hobbies:", hobbiesError);
-          // Não bloquear o fluxo se falhar os hobbies
-        }
+        await supabase.from("user_hobbies").insert(userHobbiesData);
       }
 
-      toast.success("Perfil criado com sucesso!");
-      navigate("/outs");
+      return true;
     } catch (error: any) {
-      console.error("Erro ao criar perfil:", error);
-      toast.error(error.message || "Erro ao criar perfil");
-    } finally {
-      setLoading(false);
+      console.error("Erro ao salvar perfil:", error);
+      toast.error(error.message || "Erro ao salvar perfil");
+      return false;
     }
   };
 
-  const handleContinueWithoutCpf = () => {
-    setShowCpfModal(false);
-    completeOnboarding(true);
+  const handleStep1Continue = async () => {
+    if (!validateStep1()) return;
+    
+    setLoading(true);
+    const saved = await savePartialProfile();
+    setLoading(false);
+    
+    if (saved) {
+      setCurrentStep(2);
+    }
   };
 
-  const handleFinishNow = () => {
-    setShowCpfModal(false);
+  const handleStep2Continue = async () => {
+    if (!formData.cpf) {
+      toast.error("Por favor, informe seu CPF");
+      return;
+    }
+
+    setCheckingCpf(true);
+    await new Promise(resolve => setTimeout(resolve, 1800));
+    setCheckingCpf(false);
+    setCpfChecked(true);
+    
+    setLoading(true);
+    await savePartialProfile();
+    setLoading(false);
+
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setCurrentStep(3);
+  };
+
+  const handleStep2Skip = () => {
+    setCurrentStep(3);
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSelectedImage(reader.result as string);
+        setShowCropper(true);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleCropComplete = async (croppedImage: Blob) => {
+    if (!user) return;
+
+    setShowCropper(false);
+    setUploading(true);
+
+    try {
+      const fileName = `${user.id}_${Date.now()}.jpg`;
+      const { error: uploadError, data } = await supabase.storage
+        .from("media-avatars")
+        .upload(fileName, croppedImage, {
+          contentType: "image/jpeg",
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("media-avatars")
+        .getPublicUrl(fileName);
+
+      setFormData({ ...formData, avatar_url: publicUrl });
+      toast.success("Foto enviada com sucesso!");
+    } catch (error: any) {
+      console.error("Erro ao fazer upload:", error);
+      toast.error("Falha ao enviar foto. Tente novamente.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleComplete = async () => {
+    if (formData.avatar_url) {
+      setCheckingPhoto(true);
+      await new Promise(resolve => setTimeout(resolve, 1800));
+      setCheckingPhoto(false);
+      setPhotoChecked(true);
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+
+    setLoading(true);
+    const saved = await savePartialProfile();
+    setLoading(false);
+
+    if (saved) {
+      toast.success("Perfil criado com sucesso!");
+      navigate("/feed");
+    }
+  };
+
+  const formatCpf = (value: string) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length <= 11) {
+      return numbers
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d)/, "$1.$2")
+        .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    }
+    return value;
   };
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center bg-[#F3F2EF]">
         <p className="text-muted-foreground">Carregando...</p>
       </div>
     );
   }
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
+
+  const progressValue = (currentStep / 3) * 100;
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-2">Complete seu perfil</h1>
-        <p className="text-muted-foreground mb-8">Preencha as informações para começar a usar o goOut</p>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <Label htmlFor="display_name">Nome *</Label>
-            <Input
-              id="display_name"
-              value={formData.display_name}
-              onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="handle">Nickname (sem espaços) *</Label>
-            <Input
-              id="handle"
-              value={formData.handle}
-              onChange={(e) => setFormData({ ...formData, handle: e.target.value.replace(/\s/g, "") })}
-              required
-            />
-          </div>
-
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="country">País</Label>
-              <Input
-                id="country"
-                value={formData.country}
-                onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="state">Estado</Label>
-              <Input
-                id="state"
-                value={formData.state}
-                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
-              />
-            </div>
-            <div>
-              <Label htmlFor="city">Cidade</Label>
-              <Input
-                id="city"
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              />
-            </div>
-          </div>
-
-          <div>
-            <Label htmlFor="bio">Bio curta</Label>
-            <Textarea
-              id="bio"
-              value={formData.bio}
-              onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="cpf">CPF (opcional)</Label>
-            <Input id="cpf" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} />
-            <p className="text-sm text-muted-foreground mt-1">CPF utilizado para verificação de segurança</p>
-          </div>
-
-          <div>
-            <Label>Hobbies</Label>
-            <div className="grid grid-cols-2 gap-3 mt-2">
-              {hobbies.map((hobby) => (
-                <div key={hobby.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={hobby.id}
-                    checked={selectedHobbies.includes(hobby.id)}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSelectedHobbies([...selectedHobbies, hobby.id]);
-                      } else {
-                        setSelectedHobbies(selectedHobbies.filter((id) => id !== hobby.id));
-                      }
-                    }}
-                  />
-                  <Label htmlFor={hobby.id} className="cursor-pointer">
-                    {hobby.name}
-                  </Label>
-                </div>
+    <div className="min-h-screen bg-[#F3F2EF] flex items-center justify-center p-4">
+      <Card className="w-full max-w-[720px] shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-center text-2xl">Bem-vindo(a)! Vamos configurar seu perfil.</CardTitle>
+          <div className="space-y-3 mt-6">
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3].map((step) => (
+                <div
+                  key={step}
+                  className={`w-3 h-3 rounded-full transition-colors ${
+                    step <= currentStep ? "bg-[#B6463A]" : "bg-gray-300"
+                  }`}
+                />
               ))}
             </div>
+            <Progress value={progressValue} className="h-2" />
+            <p className="text-center text-sm text-muted-foreground">
+              Etapa {currentStep} de 3
+            </p>
           </div>
+        </CardHeader>
 
-          <Button type="submit" className="w-full btn-primary" disabled={loading}>
-            {loading ? "Salvando..." : "Concluir"}
-          </Button>
-        </form>
-      </div>
+        <CardContent className="space-y-6">
+          {checkingCpf && (
+            <div className="text-center space-y-4 py-8">
+              <Loader2 className="w-12 h-12 animate-spin mx-auto text-[#B6463A]" />
+              <p className="text-lg font-medium">Checando CPF…</p>
+            </div>
+          )}
 
-      <Dialog open={showCpfModal} onOpenChange={setShowCpfModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Verificação por CPF</DialogTitle>
-            <DialogDescription>
-              O CPF é uma verificação de segurança. A disponibilização dele é opcional, porém necessária para algumas
-              permissões dentro da plataforma. Você pode terminar sua verificação agora ou depois.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleContinueWithoutCpf}>
-              Seguir sem
-            </Button>
-            <Button onClick={handleFinishNow} className="btn-primary">
-              Terminar agora
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {cpfChecked && !checkingCpf && currentStep === 2 && (
+            <div className="text-center space-y-4 py-8">
+              <CheckCircle2 className="w-12 h-12 mx-auto text-green-600" />
+              <p className="text-lg font-medium">CPF checado ✅</p>
+            </div>
+          )}
+
+          {checkingPhoto && (
+            <div className="text-center space-y-4 py-8">
+              <Loader2 className="w-12 h-12 animate-spin mx-auto text-[#B6463A]" />
+              <p className="text-lg font-medium">Checando foto…</p>
+            </div>
+          )}
+
+          {photoChecked && !checkingPhoto && currentStep === 3 && (
+            <div className="text-center space-y-4 py-8">
+              <CheckCircle2 className="w-12 h-12 mx-auto text-green-600" />
+              <p className="text-lg font-medium">Foto checada ✅</p>
+            </div>
+          )}
+
+          {!checkingCpf && !cpfChecked && !checkingPhoto && !photoChecked && (
+            <>
+              {/* STEP 1 - Dados */}
+              {currentStep === 1 && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="display_name">Nome *</Label>
+                    <Input
+                      id="display_name"
+                      value={formData.display_name}
+                      onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                      placeholder="Seu nome completo"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="handle">Apelido (@handle) *</Label>
+                    <Input
+                      id="handle"
+                      value={formData.handle}
+                      onChange={(e) =>
+                        setFormData({ ...formData, handle: e.target.value.replace(/\s/g, "") })
+                      }
+                      placeholder="seunome"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Seu nome público curto. Ex.: @jubacci
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <Label htmlFor="country">País</Label>
+                      <Input
+                        id="country"
+                        value={formData.country}
+                        onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="state">Estado</Label>
+                      <Input
+                        id="state"
+                        value={formData.state}
+                        onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="city">Cidade</Label>
+                      <Input
+                        id="city"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="bio">Bio (240-400 caracteres)</Label>
+                    <Textarea
+                      id="bio"
+                      value={formData.bio}
+                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                      rows={3}
+                      maxLength={400}
+                      placeholder="Conte um pouco sobre você..."
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {formData.bio.length}/400 caracteres
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label>Hobbies</Label>
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      {hobbies.map((hobby) => (
+                        <div key={hobby.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`hobby-${hobby.id}`}
+                            checked={selectedHobbies.includes(hobby.id)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedHobbies([...selectedHobbies, hobby.id]);
+                              } else {
+                                setSelectedHobbies(selectedHobbies.filter((id) => id !== hobby.id));
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`hobby-${hobby.id}`} className="cursor-pointer font-normal">
+                            {hobby.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="other_hobbies">Outros hobbies</Label>
+                    <Input
+                      id="other_hobbies"
+                      value={formData.other_hobbies}
+                      onChange={(e) => setFormData({ ...formData, other_hobbies: e.target.value })}
+                      placeholder="Escreva outros hobbies não listados..."
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2 - CPF */}
+              {currentStep === 2 && (
+                <div className="space-y-6">
+                  <div className="bg-accent p-4 rounded-lg flex items-start gap-3">
+                    <Shield className="w-5 h-5 text-[#B6463A] mt-0.5 flex-shrink-0" />
+                    <p className="text-sm">
+                      <strong>Usamos o CPF apenas para verificação de segurança.</strong>
+                    </p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="cpf">CPF</Label>
+                    <Input
+                      id="cpf"
+                      value={formData.cpf}
+                      onChange={(e) => setFormData({ ...formData, cpf: formatCpf(e.target.value) })}
+                      placeholder="000.000.000-00"
+                      maxLength={14}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3 - Foto */}
+              {currentStep === 3 && (
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <Avatar className="w-32 h-32 mx-auto mb-4">
+                      {formData.avatar_url ? (
+                        <AvatarImage src={formData.avatar_url} alt="Avatar" />
+                      ) : (
+                        <AvatarFallback className="text-4xl bg-muted">
+                          {formData.display_name.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageSelect}
+                      className="hidden"
+                      id="avatar-upload"
+                      disabled={uploading}
+                    />
+                    <Label htmlFor="avatar-upload">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={uploading}
+                        onClick={() => document.getElementById("avatar-upload")?.click()}
+                        className="cursor-pointer"
+                      >
+                        {uploading ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="w-4 h-4 mr-2" />
+                            Escolher foto
+                          </>
+                        )}
+                      </Button>
+                    </Label>
+
+                    <p className="text-sm text-muted-foreground mt-2">
+                      {formData.avatar_url
+                        ? "Foto selecionada com sucesso!"
+                        : "Você pode adicionar uma foto agora ou depois"}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Botões de navegação */}
+          {!checkingCpf && !cpfChecked && !checkingPhoto && !photoChecked && (
+            <div className="flex justify-between pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCurrentStep(currentStep - 1)}
+                disabled={currentStep === 1 || loading}
+              >
+                Voltar
+              </Button>
+
+              <div className="flex gap-2">
+                {currentStep === 2 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={handleStep2Skip}
+                    disabled={loading}
+                  >
+                    Pular por enquanto
+                  </Button>
+                )}
+
+                {currentStep === 1 && (
+                  <Button
+                    type="button"
+                    onClick={handleStep1Continue}
+                    disabled={loading}
+                    className="bg-[#B6463A] hover:bg-[#A23F35] text-white"
+                  >
+                    {loading ? "Salvando..." : "Continuar"}
+                  </Button>
+                )}
+
+                {currentStep === 2 && (
+                  <Button
+                    type="button"
+                    onClick={handleStep2Continue}
+                    disabled={loading || !formData.cpf}
+                    className="bg-[#B6463A] hover:bg-[#A23F35] text-white"
+                  >
+                    Continuar
+                  </Button>
+                )}
+
+                {currentStep === 3 && (
+                  <Button
+                    type="button"
+                    onClick={handleComplete}
+                    disabled={loading || uploading}
+                    className="bg-[#B6463A] hover:bg-[#A23F35] text-white"
+                  >
+                    {loading ? "Finalizando..." : "Concluir"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <ImageCropper
+        image={selectedImage || ""}
+        open={showCropper}
+        onClose={() => setShowCropper(false)}
+        onCropComplete={handleCropComplete}
+      />
     </div>
   );
 };
