@@ -55,12 +55,25 @@ const Onboarding: React.FC = () => {
   }, []);
 
   const loadHobbies = async () => {
-    const { data } = await supabase.from("hobbies").select("*");
-    if (data) setHobbies(data);
+    try {
+      const { data, error } = await supabase.from("hobbies").select("*");
+      if (error) {
+        console.error("Erro ao carregar hobbies:", error);
+        toast.error("Erro ao carregar hobbies");
+        return;
+      }
+      if (data) {
+        console.log("Hobbies carregados:", data);
+        setHobbies(data);
+      }
+    } catch (error) {
+      console.error("Erro inesperado ao carregar hobbies:", error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("handleSubmit chamado", formData);
 
     if (!formData.cpf) {
       setShowCpfModal(true);
@@ -71,13 +84,20 @@ const Onboarding: React.FC = () => {
   };
 
   const completeOnboarding = async (skipCpf = false) => {
-    if (!user) return;
+    if (!user) {
+      console.error("Usuário não autenticado");
+      toast.error("Você precisa estar autenticado");
+      return;
+    }
+
+    console.log("completeOnboarding chamado", { skipCpf, formData });
 
     try {
       const dataToValidate = skipCpf ? { ...formData, cpf: "" } : formData;
       onboardingSchema.parse(dataToValidate);
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error("Erro de validação:", error.errors);
         toast.error(error.errors[0].message);
         return;
       }
@@ -98,9 +118,13 @@ const Onboarding: React.FC = () => {
         avatar_url: formData.avatar_url || null,
       };
 
+      console.log("Inserindo perfil:", profileData);
       const { error: profileError } = await supabase.from("profiles").upsert(profileData);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Erro ao inserir perfil:", profileError);
+        throw profileError;
+      }
 
       // Insert user hobbies
       if (selectedHobbies.length > 0) {
@@ -110,12 +134,19 @@ const Onboarding: React.FC = () => {
           level: "iniciante",
         }));
 
-        await supabase.from("user_hobbies").insert(userHobbiesData);
+        console.log("Inserindo hobbies do usuário:", userHobbiesData);
+        const { error: hobbiesError } = await supabase.from("user_hobbies").insert(userHobbiesData);
+        
+        if (hobbiesError) {
+          console.error("Erro ao inserir hobbies:", hobbiesError);
+          // Não bloquear o fluxo se falhar os hobbies
+        }
       }
 
       toast.success("Perfil criado com sucesso!");
       navigate("/outs");
     } catch (error: any) {
+      console.error("Erro ao criar perfil:", error);
       toast.error(error.message || "Erro ao criar perfil");
     } finally {
       setLoading(false);
