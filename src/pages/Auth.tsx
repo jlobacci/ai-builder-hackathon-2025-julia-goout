@@ -3,6 +3,7 @@ import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogAction } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,6 +27,7 @@ const Auth: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -131,8 +133,10 @@ const Auth: React.FC = () => {
 
       <div className="flex items-center justify-center px-4 py-12">
         <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
-            <Logo size="lg" />
+          <div className="text-center flex flex-col items-center">
+            <div className="mb-6">
+              <img src="/src/assets/logo.png" alt="goOut" className="h-20 w-auto mx-auto" />
+            </div>
             <h2 className="mt-6 text-3xl font-bold text-[#333333]">Let's go OUT!</h2>
             <p className="mt-2 text-[#6F6F6F]">
               Encontre amigos para fazer aquilo que move a vida
@@ -166,6 +170,15 @@ const Auth: React.FC = () => {
                     required
                     className="w-full"
                   />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(true)}
+                    className="text-sm text-[#B6463A] hover:underline"
+                  >
+                    Esqueceu a senha?
+                  </button>
                 </div>
                 <Button
                   type="submit"
@@ -227,6 +240,22 @@ const Auth: React.FC = () => {
           </Tabs>
         </div>
       </div>
+
+      <AlertDialog open={showForgotPassword} onOpenChange={setShowForgotPassword}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>E-mail enviado!</AlertDialogTitle>
+            <AlertDialogDescription>
+              Um e-mail com instruções para redefinir sua senha foi enviado para o endereço cadastrado.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setShowForgotPassword(false)}>
+              Entendi
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
