@@ -1,16 +1,43 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Logo } from './Logo';
-import { Compass, Plus, Calendar, MessageCircle, User, Info, Newspaper } from 'lucide-react';
+import { Compass, Plus, Calendar, MessageCircle, User, Info, Newspaper, Users } from 'lucide-react';
 import { Separator } from './ui/separator';
+import { Badge } from './ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const Sidebar: React.FC = () => {
+  const { user } = useAuth();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const loadPendingCount = async () => {
+      const { count } = await supabase
+        .from('connections' as any)
+        .select('*', { count: 'exact', head: true })
+        .eq('target_id', user.id)
+        .eq('status', 'pendente');
+      
+      setPendingCount(count || 0);
+    };
+
+    loadPendingCount();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(loadPendingCount, 30000);
+    return () => clearInterval(interval);
+  }, [user]);
+
   const menuItems = [
     { to: '/outs', label: 'Descobrir Outs', icon: Compass },
     { to: '/feed', label: 'Feed', icon: Newspaper },
     { to: '/out/new', label: 'Criar Out', icon: Plus },
     { to: '/my-outs', label: 'Meus Outs', icon: Calendar },
     { to: '/messages', label: 'Mensagens', icon: MessageCircle },
+    { to: '/profile?tab=conexoes', label: 'Conexões', icon: Users, badge: pendingCount },
     { to: '/profile', label: 'Perfil', icon: User },
   ];
 
@@ -38,6 +65,11 @@ export const Sidebar: React.FC = () => {
                 >
                   <Icon className="w-5 h-5" />
                   <span className="font-medium">{item.label}</span>
+                  {item.badge && item.badge > 0 && (
+                    <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1.5 text-xs">
+                      {item.badge}
+                    </Badge>
+                  )}
                 </NavLink>
               </li>
             );

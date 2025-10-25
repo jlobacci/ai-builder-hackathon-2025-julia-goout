@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, MapPin, MessageCircle, UserPlus, UserCheck, X, Upload } from 'lucide-react';
+import { CheckCircle, MapPin, MessageCircle, UserPlus, UserCheck, X, Upload, UserMinus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -22,6 +22,7 @@ const PublicProfile: React.FC = () => {
   const { handle } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [profile, setProfile] = useState<any>(null);
   const [hobbies, setHobbies] = useState<any[]>([]);
   const [connection, setConnection] = useState<any>(null);
@@ -42,9 +43,17 @@ const PublicProfile: React.FC = () => {
   const [allHobbies, setAllHobbies] = useState<any[]>([]);
   const [selectedHobbies, setSelectedHobbies] = useState<number[]>([]);
   const [connections, setConnections] = useState<any[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
 
   useEffect(() => {
     loadProfile();
+    
+    // Auto-refresh every 15 seconds
+    const interval = setInterval(() => {
+      loadProfile();
+    }, 15000);
+    
+    return () => clearInterval(interval);
   }, [handle, user]);
 
   const loadProfile = async () => {
@@ -134,11 +143,35 @@ const PublicProfile: React.FC = () => {
             .from('profiles')
             .select('*')
             .eq('user_id', otherId)
-            .single();
+            .maybeSingle();
           return otherProfile;
         })
       );
       setConnections(connectionProfiles.filter(Boolean));
+    }
+
+    // Load pending requests (only if viewing own profile)
+    if (user && user.id === profileData.user_id) {
+      const { data: pendingData } = await supabase
+        .from('connections' as any)
+        .select('*')
+        .eq('target_id', profileData.user_id)
+        .eq('status', 'pendente')
+        .order('created_at', { ascending: false });
+
+      if (pendingData) {
+        const requestProfiles = await Promise.all(
+          pendingData.map(async (req: any) => {
+            const { data: requesterProfile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('user_id', req.requester_id)
+              .maybeSingle();
+            return { ...req, requester_profile: requesterProfile };
+          })
+        );
+        setPendingRequests(requestProfiles.filter(r => r.requester_profile));
+      }
     }
 
     setLoading(false);
@@ -147,20 +180,46 @@ const PublicProfile: React.FC = () => {
   const handleConnect = async () => {
     if (!user || !profile) return;
 
-    const { error } = await supabase
+    // Check if connection already exists
+    const { data: existingConn } = await supabase
       .from('connections' as any)
-      .insert({
-        requester_id: user.id,
-        target_id: profile.user_id,
-        status: 'pendente',
-      });
-    
-    if (error) {
-      toast.error('Erro ao enviar pedido');
-      return;
+      .select('*')
+      .or(`and(requester_id.eq.${user.id},target_id.eq.${profile.user_id}),and(requester_id.eq.${profile.user_id},target_id.eq.${user.id})`)
+      .maybeSingle();
+
+    if (existingConn && 'status' in existingConn && 'id' in existingConn) {
+      if (existingConn.status === 'recusada') {
+        // Allow retry after rejection - update existing connection
+        const { error } = await supabase
+          .from('connections' as any)
+          .update({ status: 'pendente', requester_id: user.id, target_id: profile.user_id, created_at: new Date().toISOString() })
+          .eq('id', existingConn.id);
+        
+        if (error) {
+          toast.error('Erro ao enviar pedido');
+          return;
+        }
+      } else {
+        toast.error('Já existe uma solicitação entre vocês');
+        return;
+      }
+    } else {
+      // Create new connection
+      const { error } = await supabase
+        .from('connections' as any)
+        .insert({
+          requester_id: user.id,
+          target_id: profile.user_id,
+          status: 'pendente',
+        });
+      
+      if (error) {
+        toast.error('Erro ao enviar pedido');
+        return;
+      }
     }
 
-    toast.success('Pedido de conexão enviado');
+    toast.success('Convite enviado');
     loadProfile();
   };
 
@@ -399,7 +458,7 @@ const PublicProfile: React.FC = () => {
                       
                       {connection?.status === 'pendente' && connection.requester_id === user.id && (
                         <div className="space-y-2">
-                          <Badge variant="outline" className="w-full justify-center">
+                          <Badge variant="outline" className="w-full justify-center py-2">
                             Pedido enviado
                           </Badge>
                           <Button onClick={handleCancelConnection} variant="outline" size="sm" className="w-full">
@@ -420,22 +479,46 @@ const PublicProfile: React.FC = () => {
                         </div>
                       )}
 
-                      {connection?.status === 'aceita' && (
-                        <Badge className="w-full justify-center bg-green-600">
-                          <UserCheck className="w-4 h-4 mr-2" />
-                          Conectado
-                        </Badge>
+                      {connection?.status === 'recusada' && (
+                        <div className="space-y-2">
+                          <Badge variant="outline" className="w-full justify-center py-2 text-muted-foreground">
+                            Convite recusado
+                          </Badge>
+                          <Button onClick={handleConnect} variant="outline" size="sm" className="w-full">
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Tentar novamente
+                          </Button>
+                        </div>
                       )}
 
-                      <Button
-                        onClick={() => navigate(`/messages?person_id=${profile.user_id}`)}
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                      >
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        Enviar mensagem
-                      </Button>
+                      {connection?.status === 'aceita' && (
+                        <>
+                          <Badge className="w-full justify-center py-2 bg-green-600 hover:bg-green-600">
+                            <UserCheck className="w-4 h-4 mr-2" />
+                            Conectado
+                          </Badge>
+                          <Button
+                            onClick={() => navigate(`/messages?person_id=${profile.user_id}`)}
+                            size="sm"
+                            className="w-full"
+                          >
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            Enviar mensagem
+                          </Button>
+                        </>
+                      )}
+
+                      {!connection?.status || connection?.status === 'recusada' || connection?.status === 'aceita' ? null : (
+                        <Button
+                          onClick={() => navigate(`/messages?person_id=${profile.user_id}`)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                        >
+                          <MessageCircle className="w-4 h-4 mr-2" />
+                          Enviar mensagem
+                        </Button>
+                      )}
                     </div>
                   )}
 
@@ -534,52 +617,166 @@ const PublicProfile: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="conexoes" className="space-y-4">
-                {connections.length === 0 ? (
-                  <Card>
-                    <CardContent className="py-8">
-                      <p className="text-center text-muted-foreground italic">
-                        Nenhuma conexão ainda.
-                      </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {connections.map((conn) => (
-                      <Card key={conn.user_id} className="hover:shadow-lg transition-shadow">
-                        <CardContent className="pt-6">
-                          <div className="flex flex-col items-center text-center space-y-3">
-                            <Avatar className="w-20 h-20">
-                              <AvatarImage src={conn.avatar_url || undefined} />
-                              <AvatarFallback className="bg-primary text-primary-foreground text-xl">
-                                {conn.display_name?.[0] || 'U'}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="font-semibold">{conn.display_name}</h3>
-                              <p className="text-sm text-muted-foreground">@{conn.handle}</p>
-                              {(conn.city || conn.state) && (
-                                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1">
-                                  <MapPin className="w-3 h-3" />
-                                  <span>
-                                    {[conn.city, conn.state].filter(Boolean).join(', ')}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <Button
-                              onClick={() => navigate(`/profile/${conn.handle}`)}
-                              variant="outline"
-                              size="sm"
-                              className="w-full"
-                            >
-                              Ver Perfil
-                            </Button>
-                          </div>
+                <Tabs defaultValue="minhas" className="w-full">
+                  <TabsList className={`grid w-full ${isOwnProfile ? 'grid-cols-2' : 'grid-cols-1'}`}>
+                    <TabsTrigger value="minhas">Minhas Conexões</TabsTrigger>
+                    {isOwnProfile && (
+                      <TabsTrigger value="solicitacoes">
+                        Solicitações
+                        {pendingRequests.length > 0 && (
+                          <Badge variant="destructive" className="ml-2 h-5 min-w-5 px-1.5 text-xs">
+                            {pendingRequests.length}
+                          </Badge>
+                        )}
+                      </TabsTrigger>
+                    )}
+                  </TabsList>
+
+                  <TabsContent value="minhas" className="mt-4">
+                    {connections.length === 0 ? (
+                      <Card>
+                        <CardContent className="py-8">
+                          <p className="text-center text-muted-foreground italic">
+                            Nenhuma conexão ainda.
+                          </p>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                )}
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {connections.map((conn) => (
+                          <Card key={conn.user_id} className="hover:shadow-lg transition-shadow">
+                            <CardContent className="pt-6">
+                              <div className="flex flex-col items-center text-center space-y-3">
+                                <Avatar className="w-20 h-20">
+                                  <AvatarImage src={conn.avatar_url || undefined} />
+                                  <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                                    {conn.display_name?.[0] || 'U'}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <h3 className="font-semibold">{conn.display_name}</h3>
+                                  <p className="text-sm text-muted-foreground">@{conn.handle}</p>
+                                  {(conn.city || conn.state) && (
+                                    <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1">
+                                      <MapPin className="w-3 h-3" />
+                                      <span>
+                                        {[conn.city, conn.state].filter(Boolean).join(', ')}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="w-full space-y-2">
+                                  <Button
+                                    onClick={() => navigate(`/profile/${conn.handle}`)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                  >
+                                    Ver Perfil
+                                  </Button>
+                                  <Button
+                                    onClick={() => navigate(`/messages?person_id=${conn.user_id}`)}
+                                    size="sm"
+                                    className="w-full"
+                                  >
+                                    <MessageCircle className="w-4 h-4 mr-2" />
+                                    Enviar mensagem
+                                  </Button>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  {isOwnProfile && (
+                    <TabsContent value="solicitacoes" className="mt-4">
+                      {pendingRequests.length === 0 ? (
+                        <Card>
+                          <CardContent className="py-8">
+                            <p className="text-center text-muted-foreground italic">
+                              Nenhum convite pendente.
+                            </p>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <div className="space-y-4">
+                          {pendingRequests.map((req) => (
+                            <Card key={req.id} className="hover:shadow-lg transition-shadow">
+                              <CardContent className="pt-6">
+                                <div className="flex items-center gap-4">
+                                  <Avatar className="w-16 h-16">
+                                    <AvatarImage src={req.requester_profile.avatar_url || undefined} />
+                                    <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+                                      {req.requester_profile.display_name?.[0] || 'U'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex-1">
+                                    <h3 className="font-semibold">{req.requester_profile.display_name}</h3>
+                                    <p className="text-sm text-muted-foreground">@{req.requester_profile.handle}</p>
+                                    {(req.requester_profile.city || req.requester_profile.state) && (
+                                      <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                                        <MapPin className="w-3 h-3" />
+                                        <span>
+                                          {[req.requester_profile.city, req.requester_profile.state]
+                                            .filter(Boolean)
+                                            .join(', ')}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      onClick={async () => {
+                                        const { error } = await supabase
+                                          .from('connections' as any)
+                                          .update({ status: 'aceita' })
+                                          .eq('id', req.id);
+                                        
+                                        if (error) {
+                                          toast.error('Erro ao aceitar conexão');
+                                          return;
+                                        }
+
+                                        toast.success('Conexão aceita');
+                                        loadProfile();
+                                      }}
+                                      size="sm"
+                                    >
+                                      Aceitar
+                                    </Button>
+                                    <Button
+                                      onClick={async () => {
+                                        const { error } = await supabase
+                                          .from('connections' as any)
+                                          .update({ status: 'recusada' })
+                                          .eq('id', req.id);
+                                        
+                                        if (error) {
+                                          toast.error('Erro ao recusar conexão');
+                                          return;
+                                        }
+
+                                        toast.success('Conexão recusada');
+                                        loadProfile();
+                                      }}
+                                      variant="outline"
+                                      size="sm"
+                                    >
+                                      Recusar
+                                    </Button>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      )}
+                    </TabsContent>
+                  )}
+                </Tabs>
               </TabsContent>
             </Tabs>
           </div>
