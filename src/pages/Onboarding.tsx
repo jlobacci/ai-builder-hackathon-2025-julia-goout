@@ -351,7 +351,7 @@ const Onboarding: React.FC = () => {
             </div>
           )}
 
-          {cpfChecked && !checkingCpf && currentStep === 2 && (
+          {cpfChecked && !checkingPhoto && currentStep === 2 && (
             <div className="text-center space-y-4 py-8">
               <CheckCircle2 className="w-12 h-12 mx-auto text-green-600" />
               <p className="text-lg font-medium">CPF checado ✅</p>
@@ -365,14 +365,14 @@ const Onboarding: React.FC = () => {
             </div>
           )}
 
-          {photoChecked && !checkingPhoto && currentStep === 3 && (
+          {photoChecked && currentStep === 3 && (
             <div className="text-center space-y-4 py-8">
               <CheckCircle2 className="w-12 h-12 mx-auto text-green-600" />
               <p className="text-lg font-medium">Foto checada ✅</p>
             </div>
           )}
 
-          {!checkingCpf && !cpfChecked && !checkingPhoto && !photoChecked && (
+          {!checkingCpf && !checkingPhoto && !photoChecked && (
             <>
               {/* STEP 1 - Dados */}
               {currentStep === 1 && (
@@ -594,7 +594,7 @@ const Onboarding: React.FC = () => {
           )}
 
           {/* Botões de navegação */}
-          {!checkingCpf && !cpfChecked && !checkingPhoto && !photoChecked && (
+          {!checkingCpf && !checkingPhoto && !photoChecked && !cpfChecked && (
             <div className="flex justify-between pt-4">
               <Button
                 type="button"
