@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Layout } from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { MapPin, Calendar, Users, Package, CheckCircle, AlertCircle } from 'lucide-react';
+import { MapPin, Calendar, Users, Package, CheckCircle, AlertCircle, ArrowLeft } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -22,10 +22,14 @@ const OutDetail: React.FC = () => {
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [out, setOut] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [applying, setApplying] = useState(false);
+
+  const fromCalendar = searchParams.get('from') === 'calendar';
+  const monthParam = searchParams.get('month');
 
   useEffect(() => {
     loadOut();
@@ -110,6 +114,16 @@ const OutDetail: React.FC = () => {
   return (
     <Layout>
       <div className="max-w-4xl mx-auto">
+        {fromCalendar && (
+          <Button
+            variant="ghost"
+            className="mb-4 gap-2"
+            onClick={() => navigate(`/my-outs?tab=calendar&month=${monthParam}`)}
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar para Calendário
+          </Button>
+        )}
         <Card>
           <CardHeader>
             <div className="flex items-start justify-between mb-4">

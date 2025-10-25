@@ -2,15 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Card } from '@/components/ui/card';
 
 interface CalendarSlot {
   id: number;
@@ -30,7 +25,19 @@ interface CalendarSlot {
 export const CalendarView: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [searchParams, setSearchParams] = useSearchParams();
+  
+  // Initialize from URL param or current date
+  const getInitialDate = () => {
+    const monthParam = searchParams.get('month');
+    if (monthParam) {
+      const [year, month] = monthParam.split('-').map(Number);
+      return new Date(year, month - 1, 1);
+    }
+    return new Date();
+  };
+  
+  const [currentDate, setCurrentDate] = useState(getInitialDate());
   const [slots, setSlots] = useState<CalendarSlot[]>([]);
 
   useEffect(() => {
@@ -133,12 +140,25 @@ export const CalendarView: React.FC = () => {
     return slots.filter(s => s.date === dateString);
   };
 
+  const updateMonth = (newDate: Date) => {
+    setCurrentDate(newDate);
+    const year = newDate.getFullYear();
+    const month = String(newDate.getMonth() + 1).padStart(2, '0');
+    setSearchParams({ tab: 'calendar', month: `${year}-${month}` });
+  };
+
   const previousMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1));
+    updateMonth(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
   };
 
   const nextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1));
+    updateMonth(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+  };
+
+  const handleEventClick = (inviteId: number) => {
+    const year = currentDate.getFullYear();
+    const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+    navigate(`/out/${inviteId}?from=calendar&month=${year}-${month}`);
   };
 
   const monthName = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -147,15 +167,23 @@ export const CalendarView: React.FC = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <Button onClick={previousMonth} variant="outline" size="icon">
+      <div className="flex items-center justify-between mb-6">
+        <Button onClick={previousMonth} variant="outline" size="sm" className="gap-2">
           <ChevronLeft className="w-4 h-4" />
+          Mês anterior
         </Button>
         <h2 className="text-xl font-semibold capitalize">{monthName}</h2>
-        <Button onClick={nextMonth} variant="outline" size="icon">
+        <Button onClick={nextMonth} variant="outline" size="sm" className="gap-2">
+          Próximo mês
           <ChevronRight className="w-4 h-4" />
         </Button>
       </div>
+
+      {slots.length === 0 && (
+        <p className="text-center text-muted-foreground py-12">
+          Nenhum Out marcado neste mês ainda.
+        </p>
+      )}
 
       <div className="grid grid-cols-7 gap-2">
         {weekDays.map((day) => (
@@ -171,59 +199,71 @@ export const CalendarView: React.FC = () => {
           return (
             <div
               key={index}
-              className={`min-h-24 p-2 border rounded-lg ${
-                !date ? 'bg-muted/30' : isToday ? 'border-primary bg-primary/5' : 'bg-background'
+              className={`min-h-32 p-2 border rounded-lg ${
+                !date 
+                  ? 'bg-muted/30' 
+                  : isToday 
+                  ? 'border-primary border-2 bg-primary/5' 
+                  : 'bg-background'
               }`}
             >
               {date && (
                 <>
-                  <div className="text-sm font-medium mb-1">
+                  <div className={`text-sm font-medium mb-2 ${isToday ? 'text-primary' : ''}`}>
                     {date.getDate()}
                   </div>
-                  <div className="space-y-1">
-                    {daySlots.map((slot) => (
-                      <TooltipProvider key={slot.id}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Badge
-                              variant={
-                                slot.isAuthor
-                                  ? 'default'
+                  <div className="space-y-1 max-h-24 overflow-y-auto">
+                    {daySlots.slice(0, 3).map((slot) => (
+                      <Card
+                        key={slot.id}
+                        className="p-2 cursor-pointer hover:shadow-md transition-shadow border-l-4"
+                        style={{
+                          borderLeftColor: slot.isAuthor 
+                            ? '#B6463A' 
+                            : slot.applicationStatus === 'aceito'
+                            ? '#16A34A'
+                            : '#D0D5DD'
+                        }}
+                        onClick={() => handleEventClick(slot.invite.id)}
+                        title={`${slot.invite.title} — ${slot.start_time.substring(0, 5)}–${slot.end_time.substring(0, 5)} — clique para ver detalhes`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <Calendar className="w-3 h-3 mt-0.5 text-muted-foreground flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">
+                              {slot.invite.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {slot.start_time.substring(0, 5)}–{slot.end_time.substring(0, 5)}
+                            </p>
+                            <Badge 
+                              variant="secondary" 
+                              className="text-xs mt-1"
+                              style={{
+                                backgroundColor: slot.isAuthor 
+                                  ? '#B6463A' 
                                   : slot.applicationStatus === 'aceito'
-                                  ? 'default'
-                                  : 'secondary'
-                              }
-                              className={`w-full text-xs cursor-pointer ${
-                                slot.isAuthor
-                                  ? 'bg-primary hover:bg-primary/80'
-                                  : slot.applicationStatus === 'aceito'
-                                  ? 'bg-green-600 hover:bg-green-700'
-                                  : 'bg-gray-500 hover:bg-gray-600'
-                              }`}
-                              onClick={() => navigate(`/out/${slot.invite.id}`)}
+                                  ? '#16A34A'
+                                  : '#D0D5DD',
+                                color: 'white'
+                              }}
                             >
-                              {slot.start_time.substring(0, 5)}
+                              {slot.isAuthor 
+                                ? 'Meus Outs' 
+                                : slot.applicationStatus === 'aceito'
+                                ? 'Aceito'
+                                : 'Pendente'
+                              }
                             </Badge>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <div className="space-y-1">
-                              <p className="font-medium">{slot.invite.title}</p>
-                              <p className="text-xs">
-                                {slot.start_time.substring(0, 5)} - {slot.end_time.substring(0, 5)}
-                              </p>
-                              <p className="text-xs">
-                                {slot.isAuthor 
-                                  ? 'Autor' 
-                                  : slot.applicationStatus === 'aceito'
-                                  ? 'Aceita'
-                                  : 'Pendente'
-                                }
-                              </p>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
+                          </div>
+                        </div>
+                      </Card>
                     ))}
+                    {daySlots.length > 3 && (
+                      <p className="text-xs text-muted-foreground text-center">
+                        +{daySlots.length - 3} mais
+                      </p>
+                    )}
                   </div>
                 </>
               )}

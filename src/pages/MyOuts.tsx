@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapPin, Edit, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { OutMessagesBlock } from '@/components/OutMessagesBlock';
 import { CalendarView } from '@/components/CalendarView';
@@ -14,11 +14,14 @@ import { CalendarView } from '@/components/CalendarView';
 const MyOuts: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [createdOuts, setCreatedOuts] = useState<any[]>([]);
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedOuts, setExpandedOuts] = useState<Set<number>>(new Set());
   const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
+  
+  const defaultTab = searchParams.get('tab') === 'calendar' ? 'calendar' : 'created';
 
   useEffect(() => {
     if (user) {
@@ -137,7 +140,7 @@ const MyOuts: React.FC = () => {
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Meus Outs</h1>
 
-        <Tabs defaultValue="created">
+        <Tabs defaultValue={defaultTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="created">
               Criados por mim
