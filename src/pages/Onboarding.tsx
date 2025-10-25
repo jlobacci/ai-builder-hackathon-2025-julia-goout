@@ -1,12 +1,12 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -14,13 +14,16 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Checkbox } from '@/components/ui/checkbox';
-import { z } from 'zod';
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { z } from "zod";
 
 const onboardingSchema = z.object({
-  display_name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  handle: z.string().min(3, 'Apelido deve ter pelo menos 3 caracteres').regex(/^\S+$/, 'Apelido não pode conter espaços'),
+  display_name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  handle: z
+    .string()
+    .min(3, "Nickname deve ter pelo menos 3 caracteres")
+    .regex(/^\S+$/, "Nickname não pode conter espaços"),
   country: z.string().optional(),
   state: z.string().optional(),
   city: z.string().optional(),
@@ -35,16 +38,16 @@ const Onboarding: React.FC = () => {
   const [showCpfModal, setShowCpfModal] = useState(false);
   const [selectedHobbies, setSelectedHobbies] = useState<string[]>([]);
   const [hobbies, setHobbies] = useState<any[]>([]);
-  
+
   const [formData, setFormData] = useState({
-    display_name: '',
-    handle: '',
-    country: 'Brasil',
-    state: '',
-    city: '',
-    bio: '',
-    cpf: '',
-    avatar_url: '',
+    display_name: "",
+    handle: "",
+    country: "Brasil",
+    state: "",
+    city: "",
+    bio: "",
+    cpf: "",
+    avatar_url: "",
   });
 
   React.useEffect(() => {
@@ -52,7 +55,7 @@ const Onboarding: React.FC = () => {
   }, []);
 
   const loadHobbies = async () => {
-    const { data } = await supabase.from('hobbies').select('*');
+    const { data } = await supabase.from("hobbies").select("*");
     if (data) setHobbies(data);
   };
 
@@ -71,7 +74,7 @@ const Onboarding: React.FC = () => {
     if (!user) return;
 
     try {
-      const dataToValidate = skipCpf ? { ...formData, cpf: '' } : formData;
+      const dataToValidate = skipCpf ? { ...formData, cpf: "" } : formData;
       onboardingSchema.parse(dataToValidate);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -87,7 +90,7 @@ const Onboarding: React.FC = () => {
         user_id: user.id,
         display_name: formData.display_name,
         handle: formData.handle,
-        country: formData.country || 'Brasil',
+        country: formData.country || "Brasil",
         state: formData.state,
         city: formData.city,
         bio: formData.bio,
@@ -95,27 +98,25 @@ const Onboarding: React.FC = () => {
         avatar_url: formData.avatar_url || null,
       };
 
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert(profileData);
+      const { error: profileError } = await supabase.from("profiles").upsert(profileData);
 
       if (profileError) throw profileError;
 
       // Insert user hobbies
       if (selectedHobbies.length > 0) {
-        const userHobbiesData = selectedHobbies.map(hobbyId => ({
+        const userHobbiesData = selectedHobbies.map((hobbyId) => ({
           user_id: user.id,
           hobby_id: hobbyId,
-          level: 'iniciante',
+          level: "iniciante",
         }));
 
-        await supabase.from('user_hobbies').insert(userHobbiesData);
+        await supabase.from("user_hobbies").insert(userHobbiesData);
       }
 
-      toast.success('Perfil criado com sucesso!');
-      navigate('/outs');
+      toast.success("Perfil criado com sucesso!");
+      navigate("/outs");
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao criar perfil');
+      toast.error(error.message || "Erro ao criar perfil");
     } finally {
       setLoading(false);
     }
@@ -134,9 +135,7 @@ const Onboarding: React.FC = () => {
     <div className="min-h-screen bg-background p-6">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold mb-2">Complete seu perfil</h1>
-        <p className="text-muted-foreground mb-8">
-          Preencha as informações para começar a usar o goOut
-        </p>
+        <p className="text-muted-foreground mb-8">Preencha as informações para começar a usar o goOut</p>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
@@ -150,11 +149,11 @@ const Onboarding: React.FC = () => {
           </div>
 
           <div>
-            <Label htmlFor="handle">Apelido (sem espaços) *</Label>
+            <Label htmlFor="handle">Nickname (sem espaços) *</Label>
             <Input
               id="handle"
               value={formData.handle}
-              onChange={(e) => setFormData({ ...formData, handle: e.target.value.replace(/\s/g, '') })}
+              onChange={(e) => setFormData({ ...formData, handle: e.target.value.replace(/\s/g, "") })}
               required
             />
           </div>
@@ -198,14 +197,8 @@ const Onboarding: React.FC = () => {
 
           <div>
             <Label htmlFor="cpf">CPF (opcional)</Label>
-            <Input
-              id="cpf"
-              value={formData.cpf}
-              onChange={(e) => setFormData({ ...formData, cpf: e.target.value })}
-            />
-            <p className="text-sm text-muted-foreground mt-1">
-              CPF utilizado para verificação de segurança
-            </p>
+            <Input id="cpf" value={formData.cpf} onChange={(e) => setFormData({ ...formData, cpf: e.target.value })} />
+            <p className="text-sm text-muted-foreground mt-1">CPF utilizado para verificação de segurança</p>
           </div>
 
           <div>
@@ -220,7 +213,7 @@ const Onboarding: React.FC = () => {
                       if (checked) {
                         setSelectedHobbies([...selectedHobbies, hobby.id]);
                       } else {
-                        setSelectedHobbies(selectedHobbies.filter(id => id !== hobby.id));
+                        setSelectedHobbies(selectedHobbies.filter((id) => id !== hobby.id));
                       }
                     }}
                   />
@@ -233,7 +226,7 @@ const Onboarding: React.FC = () => {
           </div>
 
           <Button type="submit" className="w-full btn-primary" disabled={loading}>
-            {loading ? 'Salvando...' : 'Concluir'}
+            {loading ? "Salvando..." : "Concluir"}
           </Button>
         </form>
       </div>
@@ -243,7 +236,8 @@ const Onboarding: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Verificação por CPF</DialogTitle>
             <DialogDescription>
-              O CPF é uma verificação de segurança. A disponibilização dele é opcional, porém necessária para algumas permissões dentro da plataforma. Você pode terminar sua verificação agora ou depois.
+              O CPF é uma verificação de segurança. A disponibilização dele é opcional, porém necessária para algumas
+              permissões dentro da plataforma. Você pode terminar sua verificação agora ou depois.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2">
