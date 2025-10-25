@@ -49,7 +49,12 @@ const Index = () => {
             {/* Text Column */}
             <div className="space-y-6">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#333333]">
-                Let's Go out!
+               <p>
+                Let's
+               </p>
+                <p>
+                   Go out!
+                  </p>
               </h1>
               <h2 className="text-lg sm:text-xl text-[#6F6F6F] leading-relaxed">
                 O app para quem quer viver mais, encontrar pessoas com os mesmos interesses, 
@@ -61,7 +66,7 @@ const Index = () => {
                 className="bg-[#B6463A] hover:bg-[#A23F35] text-white text-base sm:text-lg px-8 py-6 w-full sm:w-auto"
                 aria-label="Comece a se conectar agora"
               >
-                Conecte-se com o mundo!
+                ➡️ Teste agora e comece a se conectar
               </Button>
             </div>
 
@@ -100,7 +105,7 @@ const Index = () => {
                     São esses lugares que despertam o convívio, a troca e a criatividade.
                   </p>
                   <p>
-                    O GoOut ou nasceu para te tirar da rotina, te conectar com pessoas e te inspirar 
+                    O Let's Go ou nasceu para te tirar da rotina, te conectar com pessoas e te inspirar 
                     a ocupar a cidade com propósito.
                   </p>
                   <p className="font-semibold text-[#333333]">
