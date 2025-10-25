@@ -22,11 +22,15 @@ import { cn } from '@/lib/utils';
 const createOutSchema = z.object({
   title: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
   description: z.string().optional(),
-  hobby_id: z.number({ required_error: 'Selecione um hobby' }),
+  hobby_id: z.number().nullable(),
+  custom_hobby: z.string().optional(),
   city: z.string().optional(),
   slots: z.number().min(1).max(5),
   mode: z.enum(['presencial', 'online', 'hibrido']),
-});
+}).refine(
+  (data) => data.hobby_id !== null || (data.custom_hobby && data.custom_hobby.trim().length > 0),
+  { message: 'Selecione um hobby da lista ou digite um hobby customizado', path: ['hobby_id'] }
+);
 
 type TimeSlot = {
   date: Date | undefined;
