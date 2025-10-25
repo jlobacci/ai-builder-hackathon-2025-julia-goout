@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CalendarIcon, Plus, X } from 'lucide-react';
@@ -181,7 +182,7 @@ const CreateOut: React.FC = () => {
   if (verified === null) {
     return (
       <Layout>
-        <div className="max-w-2xl mx-auto">
+        <div className="space-y-6">
           <p className="text-center text-muted-foreground">Carregando...</p>
         </div>
       </Layout>
@@ -191,7 +192,7 @@ const CreateOut: React.FC = () => {
   if (!verified) {
     return (
       <Layout>
-        <div className="max-w-2xl mx-auto">
+        <div className="space-y-6">
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -205,40 +206,42 @@ const CreateOut: React.FC = () => {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">Criar Out</h1>
+      <div className="space-y-6">
+        <h1 className="text-3xl font-bold">Criar Out</h1>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Grupo 1: Título / Hobby / Modo */}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="title">Título *</Label>
-              <Input
-                id="title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                required
-              />
-            </div>
+        <Card className="border shadow-sm">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Grupo 1: Título / Hobby / Modo */}
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Título *</Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    required
+                  />
+                </div>
 
-            <div>
-              <Label htmlFor="hobby">Hobby *</Label>
-              <Select 
-                value={formData.hobby_id?.toString() || ''} 
-                onValueChange={(value) => setFormData({ ...formData, hobby_id: parseInt(value) })}
-              >
-                <SelectTrigger className="bg-background">
-                  <SelectValue placeholder="Selecione um hobby" />
-                </SelectTrigger>
-                <SelectContent className="bg-background z-50">
-                  {hobbies.map((hobby) => (
-                    <SelectItem key={hobby.id} value={hobby.id.toString()}>
-                      {hobby.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                <div>
+                  <Label htmlFor="hobby">Hobby *</Label>
+                  <Select 
+                    value={formData.hobby_id?.toString() || ''} 
+                    onValueChange={(value) => setFormData({ ...formData, hobby_id: parseInt(value) })}
+                  >
+                    <SelectTrigger className="bg-background">
+                      <SelectValue placeholder="Selecione um hobby" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {hobbies.map((hobby) => (
+                        <SelectItem key={hobby.id} value={hobby.id.toString()}>
+                          {hobby.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
             <div>
               <Label>Modo *</Label>
@@ -428,10 +431,12 @@ const CreateOut: React.FC = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? 'Publicando...' : 'Publicar Out'}
-          </Button>
-        </form>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Publicando...' : 'Publicar Out'}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       </div>
     </Layout>
   );

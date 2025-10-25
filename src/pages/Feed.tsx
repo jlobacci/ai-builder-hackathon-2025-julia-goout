@@ -429,7 +429,7 @@ const Feed: React.FC = () => {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto space-y-4">
+      <div className="space-y-4">
         <h1 className="text-3xl font-bold">Feed</h1>
 
         {/* Composer */}

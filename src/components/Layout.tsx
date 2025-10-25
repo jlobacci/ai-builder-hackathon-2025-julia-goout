@@ -234,7 +234,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </main>
           ) : (
             // Other pages - with sidebar
-            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4 xl:gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4">
               {/* Left Sidebar - Profile Card (Desktop only) */}
               <aside className="hidden lg:block">
                 <ProfileCard />
@@ -242,7 +242,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
               {/* Main Content */}
               <main className="min-h-[calc(100vh-8rem)]">
-                <div className="max-w-3xl">
+                <div className="max-w-2xl">
                   {children}
                 </div>
               </main>
