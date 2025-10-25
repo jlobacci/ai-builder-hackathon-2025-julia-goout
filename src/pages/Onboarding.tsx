@@ -136,7 +136,7 @@ const Onboarding: React.FC = () => {
       if (selectedHobbies.length > 0) {
         const userHobbiesData = selectedHobbies.map((hobbyId) => ({
           user_id: user.id,
-          hobby_id: hobbyId,
+          hobby_id: Number(hobbyId),
           level: "iniciante",
         }));
 

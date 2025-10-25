@@ -39,7 +39,7 @@ const OutDetail: React.FC = () => {
         author:profiles!invites_author_id_fkey(display_name, handle, avatar_url, verified),
         hobby:hobbies(name)
       `)
-      .eq('id', id)
+      .eq('id', Number(id))
       .single();
 
     if (data) {
@@ -61,7 +61,7 @@ const OutDetail: React.FC = () => {
       const { error } = await supabase
         .from('applications')
         .insert({
-          invite_id: id,
+          invite_id: Number(id),
           applicant_id: user.id,
           message: 'Quero participar!',
           status: 'pendente',

@@ -11,7 +11,7 @@ import { Send } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ChatMessage {
-  id: string;
+  id: number;
   sender_id: string;
   body: string;
   created_at: string;
@@ -49,7 +49,7 @@ const OutChat: React.FC = () => {
         *,
         sender:profiles!messages_sender_id_fkey(display_name, avatar_url)
       `)
-      .eq('invite_id', id)
+      .eq('invite_id', Number(id))
       .order('created_at', { ascending: true });
 
     if (data) {
@@ -66,7 +66,7 @@ const OutChat: React.FC = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `invite_id=eq.${id}`
+          filter: `invite_id=eq.${Number(id)}`
         },
         async (payload) => {
           const { data } = await supabase
@@ -101,7 +101,7 @@ const OutChat: React.FC = () => {
       const { error } = await supabase
         .from('messages')
         .insert({
-          invite_id: id,
+          invite_id: Number(id),
           sender_id: user.id,
           body: newMessage.trim(),
         });
