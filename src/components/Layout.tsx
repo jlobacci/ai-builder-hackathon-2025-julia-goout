@@ -1,16 +1,30 @@
-import React from 'react';
-import { Sidebar } from './Sidebar';
-import { Input } from './ui/input';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Button } from './ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, NavLink } from 'react-router-dom';
+import { 
+  Home, 
+  Calendar, 
+  PlusCircle, 
+  MessageCircle, 
+  User, 
+  Shield,
+  Settings,
+  LogOut,
+  Menu,
+  X
+} from 'lucide-react';
+import { ProfileCard } from './ProfileCard';
+import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,51 +33,211 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [profile, setProfile] = useState<any>(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      loadProfile();
+    }
+  }, [user]);
+
+  const loadProfile = async () => {
+    if (!user) return;
+
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+
+    if (profileData) {
+      setProfile(profileData);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/auth');
   };
 
+  const navItems = [
+    { path: '/feed', icon: Home, label: 'Feed' },
+    { path: '/my-outs', icon: Calendar, label: 'Meus Outs' },
+    { path: '/create-out', icon: PlusCircle, label: 'Criar Out' },
+    { path: '/messages', icon: MessageCircle, label: 'Mensagens' },
+    { path: '/profile', icon: User, label: 'Perfil' },
+  ];
+
+  const isActive = (path: string) => location.pathname === path;
+
   return (
-    <div className="min-h-screen flex w-full">
-      <Sidebar />
-      
-      <div className="flex-1 ml-64">
-        <header className="sticky top-0 z-10 h-16 border-b bg-background flex items-center justify-between px-6">
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar..."
-                className="pl-10"
-              />
-            </div>
+    <div className="min-h-screen flex flex-col w-full bg-background">
+      {/* Fixed Top Navbar */}
+      <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
+          {/* Logo */}
+          <button 
+            onClick={() => navigate('/feed')}
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <span className="text-2xl font-bold text-primary">goOut</span>
+          </button>
+
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.path);
+              
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={`flex flex-col items-center px-4 py-2 rounded-lg transition-all ${
+                    active 
+                      ? 'text-primary border-b-2 border-primary' 
+                      : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" />
+                  <span className="text-xs mt-1">{item.label}</span>
+                </NavLink>
+              );
+            })}
+          </nav>
+
+          {/* Right side - Profile Avatar */}
+          <div className="flex items-center gap-2">
+            {/* Mobile Menu */}
+            <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-64">
+                <div className="flex flex-col gap-4 mt-8">
+                  {/* Profile info in mobile menu */}
+                  {profile && (
+                    <div className="flex items-center gap-3 pb-4 border-b">
+                      <Avatar className="w-12 h-12">
+                        <AvatarImage src={profile.avatar_url || undefined} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {profile.display_name?.[0] || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <p className="font-semibold text-sm">{profile.display_name}</p>
+                        <p className="text-xs text-muted-foreground">@{profile.handle}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Mobile nav items */}
+                  {navItems.map((item) => {
+                    const Icon = item.icon;
+                    const active = isActive(item.path);
+                    
+                    return (
+                      <button
+                        key={item.path}
+                        onClick={() => {
+                          navigate(item.path);
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                          active 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'hover:bg-accent'
+                        }`}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{item.label}</span>
+                      </button>
+                    );
+                  })}
+
+                  <div className="pt-4 border-t">
+                    <button
+                      onClick={() => {
+                        navigate('/profile');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent w-full"
+                    >
+                      <Settings className="w-5 h-5" />
+                      <span>Configurações</span>
+                    </button>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-destructive/10 text-destructive w-full"
+                    >
+                      <LogOut className="w-5 h-5" />
+                      <span>Sair</span>
+                    </button>
+                  </div>
+                </div>
+              </SheetContent>
+            </Sheet>
+
+            {/* Desktop Profile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="cursor-pointer">
+                <Avatar className="w-10 h-10 border-2 border-border hover:border-primary transition-colors">
+                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarFallback className="bg-primary text-primary-foreground">
+                    {profile?.display_name?.[0] || user?.email?.[0].toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-card z-50">
+                {profile && (
+                  <>
+                    <div className="px-2 py-3 border-b">
+                      <p className="font-semibold">{profile.display_name}</p>
+                      <p className="text-sm text-muted-foreground">@{profile.handle}</p>
+                    </div>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                  <User className="w-4 h-4 mr-2" />
+                  Meu Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/profile')} className="cursor-pointer">
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configurações
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+        </div>
+      </header>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger>
-              <Avatar>
-                <AvatarImage src="" />
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {user?.email?.[0].toUpperCase() || 'U'}
-                </AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => navigate('/profile')}>
-                Meu Perfil
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleSignOut}>
-                Sair
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </header>
+      {/* Main Content Area */}
+      <div className="flex-1 pt-16">
+        <div className="max-w-7xl mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+            {/* Left Sidebar - Profile Card (Desktop only) */}
+            <aside className="hidden lg:block">
+              <ProfileCard />
+            </aside>
 
-        <main className="p-6">
-          {children}
-        </main>
+            {/* Main Content */}
+            <main className="min-h-[calc(100vh-8rem)]">
+              <div className="max-w-3xl mx-auto">
+                {children}
+              </div>
+            </main>
+          </div>
+        </div>
       </div>
     </div>
   );

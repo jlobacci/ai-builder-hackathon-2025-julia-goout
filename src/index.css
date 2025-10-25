@@ -8,8 +8,8 @@
 
 @layer base {
   :root {
-    /* Core - Clean white canvas */
-    --background: 0 0% 100%;
+    /* Core - LinkedIn-inspired gray canvas */
+    --background: 30 7% 95%; /* #F3F2EF */
     --foreground: 0 0% 15%;
 
     /* Cards - Subtle elevation */

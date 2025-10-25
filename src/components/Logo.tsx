@@ -7,14 +7,15 @@ export const Logo: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) =
     lg: 'w-16 h-16 text-base'
   };
 
+  const textSize = {
+    sm: 'text-lg',
+    md: 'text-2xl',
+    lg: 'text-3xl'
+  };
+
   return (
-    <div className="flex items-center gap-2">
-      <div className={`${sizeClasses[size]} bg-primary rounded-lg flex items-center justify-center font-bold text-primary-foreground`}>
-        OUT
-      </div>
-      {size !== 'sm' && (
-        <span className="text-xl font-bold text-foreground">goOut</span>
-      )}
+    <div className="flex items-center">
+      <span className={`${textSize[size]} font-bold text-primary`}>goOut</span>
     </div>
   );
 };
