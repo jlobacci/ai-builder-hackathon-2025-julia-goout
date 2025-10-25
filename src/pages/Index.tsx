@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Sparkles, Users, Activity, Shield, Camera, Lock } from 'lucide-react';
 import { Logo } from '@/components/Logo';
-import heroBg from '@/assets/hero-bg.png';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -44,29 +43,25 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section 
-        className="py-12 sm:py-20 relative bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroBg})` }}
-      >
-        <div className="absolute inset-0 bg-[#5C1F1F]/40"></div>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
+      <section className="py-12 sm:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
             {/* Text Column */}
             <div className="space-y-6">
-              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
+              <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#333333]">
                 Let's Go out!
               </h1>
-              <h2 className="text-lg sm:text-xl text-white/90 leading-relaxed drop-shadow-md">
+              <h2 className="text-lg sm:text-xl text-[#6F6F6F] leading-relaxed">
                 O app para quem quer viver mais, encontrar pessoas com os mesmos interesses, 
                 aprender algo novo e se manter em movimento.
               </h2>
               <Button 
                 size="lg"
                 onClick={() => navigate('/auth')}
-                className="bg-white hover:bg-white/90 text-[#B6463A] text-base sm:text-lg px-8 py-6 w-full sm:w-auto font-bold"
+                className="bg-[#B6463A] hover:bg-[#A23F35] text-white text-base sm:text-lg px-8 py-6 w-full sm:w-auto"
                 aria-label="Comece a se conectar agora"
               >
-                Conecte-se com o mundo!
+                ➡️ Teste agora e comece a se conectar
               </Button>
             </div>
 
@@ -99,13 +94,10 @@ const Index = () => {
                 <div className="space-y-4 text-[#6F6F6F] text-base sm:text-lg max-w-4xl mx-auto">
                   <p>
                     A teoria do terceiro lugar fala sobre os espaços onde nos sentimos parte de algo: 
-                    cafés, praças, parques, estúdios, quadras, livrarias.
+                    cafés, praças, parques, estúdios, quadras, livrarias. São esses lugares que despertam o convívio, a troca e a criatividade.
                   </p>
                   <p>
-                    São esses lugares que despertam o convívio, a troca e a criatividade.
-                  </p>
-                  <p>
-                    O Let's Go ou nasceu para te tirar da rotina, te conectar com pessoas e te inspirar 
+                    O GoOut nasceu para te tirar da rotina, te conectar com pessoas e te inspirar 
                     a ocupar a cidade com propósito.
                   </p>
                   <p className="font-semibold text-[#333333]">
@@ -158,13 +150,9 @@ const Index = () => {
       </section>
 
       {/* Security Section */}
-      <section 
-        className="py-12 sm:py-20 relative bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${heroBg})` }}
-      >
-        <div className="absolute inset-0 bg-[#5C1F1F]/40"></div>
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 relative z-10">
-          <Card className="border-none shadow-lg bg-white/95 backdrop-blur-sm">
+      <section className="py-12 sm:py-20">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <Card className="border-none shadow-lg">
             <CardContent className="p-8 sm:p-12 space-y-8">
               <div className="text-center space-y-4">
                 <h2 className="text-3xl sm:text-4xl font-bold text-[#333333]">
