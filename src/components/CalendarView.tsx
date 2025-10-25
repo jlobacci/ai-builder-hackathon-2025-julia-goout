@@ -148,6 +148,9 @@ export const CalendarView: React.FC = () => {
     return slots.filter(s => {
       if (s.date !== dateString) return false;
       
+      // Filter out slots without valid invite data
+      if (!s.invite || !s.invite.title) return false;
+      
       // Apply filters
       if (s.isAuthor && !filters.author) return false;
       if (!s.isAuthor && s.applicationStatus === 'aceito' && !filters.accepted) return false;
@@ -268,26 +271,28 @@ export const CalendarView: React.FC = () => {
                   </div>
                   <div className="space-y-1 max-h-24 overflow-y-auto">
                     {daySlots.slice(0, 3).map((slot) => (
-                      <div
-                        key={slot.id}
-                        className="p-1.5 cursor-pointer hover:shadow-sm transition-shadow rounded border-l-4 bg-background"
-                        style={{
-                          borderLeftColor: slot.isAuthor 
-                            ? '#B6463A' 
-                            : slot.applicationStatus === 'aceito'
-                            ? '#16A34A'
-                            : '#D0D5DD'
-                        }}
-                        onClick={() => handleEventClick(slot.invite.id)}
-                        title={`${slot.invite.title} — ${slot.start_time.substring(0, 5)}–${slot.end_time.substring(0, 5)} — clique para ver detalhes`}
-                      >
-                        <p className="text-xs font-medium truncate leading-tight">
-                          {slot.invite.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground leading-tight">
-                          {slot.start_time.substring(0, 5)}–{slot.end_time.substring(0, 5)}
-                        </p>
-                      </div>
+                      slot.invite && slot.invite.title ? (
+                        <div
+                          key={slot.id}
+                          className="p-1.5 cursor-pointer hover:shadow-sm transition-shadow rounded border-l-4 bg-background"
+                          style={{
+                            borderLeftColor: slot.isAuthor 
+                              ? '#B6463A' 
+                              : slot.applicationStatus === 'aceito'
+                              ? '#16A34A'
+                              : '#D0D5DD'
+                          }}
+                          onClick={() => handleEventClick(slot.invite.id)}
+                          title={`${slot.invite.title} — ${slot.start_time.substring(0, 5)}–${slot.end_time.substring(0, 5)} — clique para ver detalhes`}
+                        >
+                          <p className="text-xs font-medium truncate leading-tight">
+                            {slot.invite.title}
+                          </p>
+                          <p className="text-xs text-muted-foreground leading-tight">
+                            {slot.start_time.substring(0, 5)}–{slot.end_time.substring(0, 5)}
+                          </p>
+                        </div>
+                      ) : null
                     ))}
                     {daySlots.length > 3 && (
                       <p className="text-xs text-muted-foreground text-center">
