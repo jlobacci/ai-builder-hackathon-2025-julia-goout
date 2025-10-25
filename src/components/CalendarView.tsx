@@ -179,12 +179,6 @@ export const CalendarView: React.FC = () => {
         </Button>
       </div>
 
-      {slots.length === 0 && (
-        <p className="text-center text-muted-foreground py-12">
-          Nenhum Out marcado neste mês ainda.
-        </p>
-      )}
-
       <div className="grid grid-cols-7 gap-2">
         {weekDays.map((day) => (
           <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
