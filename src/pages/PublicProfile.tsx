@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { CheckCircle, MapPin, Star, MessageCircle, UserPlus, UserCheck, X, Upload } from 'lucide-react';
+import { CheckCircle, MapPin, MessageCircle, UserPlus, UserCheck, X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,15 +23,10 @@ const PublicProfile: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
-  const [ratings, setRatings] = useState<any>(null);
   const [hobbies, setHobbies] = useState<any[]>([]);
-  const [reviews, setReviews] = useState<any[]>([]);
-  const [myReview, setMyReview] = useState<any>(null);
   const [connection, setConnection] = useState<any>(null);
   const [outs, setOuts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [reviewStars, setReviewStars] = useState(5);
-  const [reviewBody, setReviewBody] = useState('');
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     display_name: '',
@@ -89,14 +84,6 @@ const PublicProfile: React.FC = () => {
     });
     setAvatarPreview(profileData.avatar_url || '');
 
-    // Load ratings
-    const { data: ratingsData } = await supabase
-      .from('v_profile_ratings' as any)
-      .select('*')
-      .eq('user_id', profileData.user_id)
-      .maybeSingle();
-    setRatings(ratingsData);
-
     // Load hobbies
     const { data: hobbiesData } = await supabase
       .from('user_hobbies')
@@ -111,30 +98,6 @@ const PublicProfile: React.FC = () => {
       .select('*')
       .order('name');
     setAllHobbies(allHobbiesData || []);
-
-    // Load reviews
-    const { data: reviewsData } = await supabase
-      .from('reviews' as any)
-      .select('*, reviewer:profiles!reviews_reviewer_id_fkey(display_name, avatar_url)')
-      .eq('reviewee_id', profileData.user_id)
-      .order('created_at', { ascending: false });
-    setReviews(reviewsData || []);
-
-    // Load my review if logged in
-    if (user && user.id !== profileData.user_id) {
-      const { data: myReviewData } = await supabase
-        .from('reviews' as any)
-        .select('*')
-        .eq('reviewee_id', profileData.user_id)
-        .eq('reviewer_id', user.id)
-        .maybeSingle();
-      
-      if (myReviewData) {
-        setMyReview(myReviewData);
-        setReviewStars((myReviewData as any).stars);
-        setReviewBody((myReviewData as any).body || '');
-      }
-    }
 
     // Load connection status
     if (user && user.id !== profileData.user_id) {
@@ -155,62 +118,6 @@ const PublicProfile: React.FC = () => {
     setOuts(outsData || []);
 
     setLoading(false);
-  };
-
-  const handleSaveReview = async () => {
-    if (!user || !profile) return;
-
-    const reviewData = {
-      reviewee_id: profile.user_id,
-      reviewer_id: user.id,
-      stars: reviewStars,
-      body: reviewBody,
-    };
-
-    if (myReview) {
-      const { error } = await supabase
-        .from('reviews' as any)
-        .update(reviewData)
-        .eq('id', myReview.id);
-      
-      if (error) {
-        toast.error('Erro ao atualizar avaliação');
-        return;
-      }
-      toast.success('Avaliação atualizada');
-    } else {
-      const { error } = await supabase
-        .from('reviews' as any)
-        .insert(reviewData);
-      
-      if (error) {
-        toast.error('Erro ao salvar avaliação');
-        return;
-      }
-      toast.success('Avaliação enviada');
-    }
-
-    loadProfile();
-  };
-
-  const handleDeleteReview = async () => {
-    if (!myReview) return;
-
-    const { error } = await supabase
-      .from('reviews' as any)
-      .delete()
-      .eq('id', myReview.id);
-    
-    if (error) {
-      toast.error('Erro ao remover avaliação');
-      return;
-    }
-
-    toast.success('Avaliação removida');
-    setMyReview(null);
-    setReviewStars(5);
-    setReviewBody('');
-    loadProfile();
   };
 
   const handleConnect = async () => {
@@ -398,31 +305,6 @@ const PublicProfile: React.FC = () => {
     }
   };
 
-  const renderStars = (stars: number, count?: number) => {
-    const fullStars = Math.floor(stars);
-    const hasHalfStar = stars % 1 >= 0.5;
-    
-    return (
-      <div className="flex items-center gap-1">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`w-4 h-4 ${
-              i < fullStars
-                ? 'fill-primary text-primary'
-                : i === fullStars && hasHalfStar
-                ? 'fill-primary/50 text-primary'
-                : 'text-muted-foreground'
-            }`}
-          />
-        ))}
-        {count !== undefined && (
-          <span className="text-sm text-muted-foreground ml-1">({count})</span>
-        )}
-      </div>
-    );
-  };
-
   if (loading) {
     return (
       <Layout>
@@ -469,12 +351,6 @@ const PublicProfile: React.FC = () => {
                       )}
                     </div>
                     <p className="text-muted-foreground mb-3">@{profile.handle}</p>
-
-                    {ratings && (
-                      <div className="flex justify-center mb-3">
-                        {renderStars(ratings.avg_stars || 0, ratings.reviews_count || 0)}
-                      </div>
-                    )}
 
                     {(profile.city || profile.state || profile.country) && (
                       <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground mb-4">
@@ -552,9 +428,8 @@ const PublicProfile: React.FC = () => {
           {/* Right content */}
           <div>
             <Tabs defaultValue="sobre" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="sobre">Sobre</TabsTrigger>
-                <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
                 <TabsTrigger value="outs">Outs Organizados</TabsTrigger>
               </TabsList>
 
@@ -580,97 +455,6 @@ const PublicProfile: React.FC = () => {
                             </Badge>
                           ))}
                         </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="avaliacoes" className="space-y-4">
-                {user && !isOwnProfile && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Sua Avaliação</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Estrelas</label>
-                        <div className="flex gap-2">
-                          {[1, 2, 3, 4, 5].map((s) => (
-                            <button
-                              key={s}
-                              type="button"
-                              onClick={() => setReviewStars(s)}
-                              className="focus:outline-none"
-                            >
-                              <Star
-                                className={`w-8 h-8 ${
-                                  s <= reviewStars ? 'fill-primary text-primary' : 'text-muted-foreground'
-                                }`}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Comentário</label>
-                        <Textarea
-                          value={reviewBody}
-                          onChange={(e) => setReviewBody(e.target.value)}
-                          placeholder="Escreva sua avaliação..."
-                          rows={4}
-                        />
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button onClick={handleSaveReview}>
-                          {myReview ? 'Atualizar avaliação' : 'Salvar avaliação'}
-                        </Button>
-                        {myReview && (
-                          <Button onClick={handleDeleteReview} variant="outline">
-                            Remover avaliação
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Todas as Avaliações</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {reviews.length === 0 ? (
-                      <p className="text-muted-foreground italic">Nenhuma avaliação ainda.</p>
-                    ) : (
-                      <div className="space-y-4">
-                        {reviews.map((review) => (
-                          <div key={review.id} className="border-b pb-4 last:border-0">
-                            <div className="flex items-start gap-3">
-                              <Avatar className="w-10 h-10">
-                                <AvatarImage src={review.reviewer?.avatar_url} />
-                                <AvatarFallback>
-                                  {review.reviewer?.display_name?.[0] || 'U'}
-                                </AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <span className="font-semibold">{review.reviewer?.display_name}</span>
-                                  <span className="text-sm text-muted-foreground">
-                                    {formatDistanceToNow(new Date(review.created_at), {
-                                      addSuffix: true,
-                                      locale: ptBR,
-                                    })}
-                                  </span>
-                                </div>
-                                {renderStars(review.stars)}
-                                {review.body && <p className="mt-2">{review.body}</p>}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
                       </div>
                     )}
                   </CardContent>
