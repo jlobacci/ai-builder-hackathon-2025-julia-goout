@@ -41,6 +41,7 @@ const PublicProfile: React.FC = () => {
   const [cropDialogOpen, setCropDialogOpen] = useState(false);
   const [allHobbies, setAllHobbies] = useState<any[]>([]);
   const [selectedHobbies, setSelectedHobbies] = useState<number[]>([]);
+  const [connections, setConnections] = useState<any[]>([]);
 
   useEffect(() => {
     loadProfile();
@@ -116,6 +117,29 @@ const PublicProfile: React.FC = () => {
       .eq('author_id', profileData.user_id)
       .order('created_at', { ascending: false });
     setOuts(outsData || []);
+
+    // Load connections (only accepted ones)
+    const { data: connectionsData } = await supabase
+      .from('connections' as any)
+      .select('*')
+      .eq('status', 'aceita')
+      .or(`requester_id.eq.${profileData.user_id},target_id.eq.${profileData.user_id}`);
+
+    if (connectionsData) {
+      // Get the other user's profile for each connection
+      const connectionProfiles = await Promise.all(
+        connectionsData.map(async (conn: any) => {
+          const otherId = conn.requester_id === profileData.user_id ? conn.target_id : conn.requester_id;
+          const { data: otherProfile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', otherId)
+            .single();
+          return otherProfile;
+        })
+      );
+      setConnections(connectionProfiles.filter(Boolean));
+    }
 
     setLoading(false);
   };
@@ -428,9 +452,10 @@ const PublicProfile: React.FC = () => {
           {/* Right content */}
           <div>
             <Tabs defaultValue="sobre" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="sobre">Sobre</TabsTrigger>
                 <TabsTrigger value="outs">Outs Organizados</TabsTrigger>
+                <TabsTrigger value="conexoes">Conexões</TabsTrigger>
               </TabsList>
 
               <TabsContent value="sobre" className="space-y-4">
@@ -501,6 +526,55 @@ const PublicProfile: React.FC = () => {
                           >
                             Ver Out
                           </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="conexoes" className="space-y-4">
+                {connections.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8">
+                      <p className="text-center text-muted-foreground italic">
+                        Nenhuma conexão ainda.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {connections.map((conn) => (
+                      <Card key={conn.user_id} className="hover:shadow-lg transition-shadow">
+                        <CardContent className="pt-6">
+                          <div className="flex flex-col items-center text-center space-y-3">
+                            <Avatar className="w-20 h-20">
+                              <AvatarImage src={conn.avatar_url || undefined} />
+                              <AvatarFallback className="bg-primary text-primary-foreground text-xl">
+                                {conn.display_name?.[0] || 'U'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <h3 className="font-semibold">{conn.display_name}</h3>
+                              <p className="text-sm text-muted-foreground">@{conn.handle}</p>
+                              {(conn.city || conn.state) && (
+                                <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mt-1">
+                                  <MapPin className="w-3 h-3" />
+                                  <span>
+                                    {[conn.city, conn.state].filter(Boolean).join(', ')}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <Button
+                              onClick={() => navigate(`/profile/${conn.handle}`)}
+                              variant="outline"
+                              size="sm"
+                              className="w-full"
+                            >
+                              Ver Perfil
+                            </Button>
+                          </div>
                         </CardContent>
                       </Card>
                     ))}
