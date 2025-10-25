@@ -38,6 +38,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { SecureImage } from '@/components/SecureImage';
+import { z } from 'zod';
+
+const postSchema = z.object({
+  body: z.string().max(5000, 'Post deve ter no máximo 5000 caracteres').optional(),
+});
 
 interface Profile {
   user_id: string;
@@ -217,6 +223,16 @@ const Feed: React.FC = () => {
       return;
     }
 
+    // Validate post body length
+    const validation = postSchema.safeParse({ body: composerBody });
+    if (!validation.success) {
+      toast({ 
+        title: validation.error.errors[0].message, 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     setPublishing(true);
     try {
       // Create post
@@ -231,10 +247,10 @@ const Feed: React.FC = () => {
       const postId = (newPost as any)?.id;
       if (!postId) throw new Error('Post ID not returned');
 
-      // Upload images
+      // Upload images and store file paths (not URLs)
       for (const image of composerImages) {
         const fileName = `${user?.id}/${Date.now()}-${image.name}`;
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('media-posts')
           .upload(fileName, image);
 
@@ -244,11 +260,10 @@ const Feed: React.FC = () => {
           continue;
         }
 
-        const { data: urlData } = supabase.storage.from('media-posts').getPublicUrl(fileName);
-
+        // Store only the file path, not the full URL
         await supabase
           .from('post_images' as any)
-          .insert({ post_id: postId, url: urlData.publicUrl });
+          .insert({ post_id: postId, url: fileName });
       }
 
       // Insert mentions
@@ -653,8 +668,9 @@ const Feed: React.FC = () => {
                           post.post_images!.length === 1 ? 'w-full' : 'aspect-square'
                         }`}
                       >
-                        <img
-                          src={img.url}
+                        <SecureImage
+                          bucket="media-posts"
+                          path={img.url}
                           alt=""
                           className={`w-full object-cover ${
                             post.post_images!.length === 1 ? 'max-h-[600px]' : 'h-full'

@@ -1104,6 +1104,7 @@ export type Database = {
     Functions: {
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
+      validate_cpf: { Args: { cpf_input: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

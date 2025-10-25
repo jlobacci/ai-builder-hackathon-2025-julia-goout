@@ -20,11 +20,19 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 const createOutSchema = z.object({
-  title: z.string().min(5, 'Título deve ter pelo menos 5 caracteres'),
-  description: z.string().optional(),
+  title: z.string()
+    .min(5, 'Título deve ter pelo menos 5 caracteres')
+    .max(200, 'Título deve ter no máximo 200 caracteres'),
+  description: z.string()
+    .max(2000, 'Descrição deve ter no máximo 2000 caracteres')
+    .optional(),
   hobby_id: z.number().nullable(),
-  custom_hobby: z.string().optional(),
-  city: z.string().optional(),
+  custom_hobby: z.string()
+    .max(100, 'Hobby customizado deve ter no máximo 100 caracteres')
+    .optional(),
+  city: z.string()
+    .max(100, 'Cidade deve ter no máximo 100 caracteres')
+    .optional(),
   slots: z.number().min(1).max(5),
   mode: z.enum(['presencial', 'online', 'hibrido']),
 }).refine(
