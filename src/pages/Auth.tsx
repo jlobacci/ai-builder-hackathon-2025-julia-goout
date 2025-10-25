@@ -112,96 +112,120 @@ const Auth: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="max-w-md w-full space-y-8 p-8">
-        <div className="text-center">
-          <Logo size="lg" />
-          <h2 className="mt-6 text-3xl font-bold">Let's go OUT!</h2>
-          <p className="mt-2 text-muted-foreground">
-            Encontre amigos para fazer aquilo que move a vida
-          </p>
+    <div className="min-h-screen bg-[#F3F2EF]">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white shadow-sm">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="text-2xl font-bold text-[#B6463A]">goOut</div>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/')}
+              className="text-[#6F6F6F] hover:text-[#B6463A]"
+            >
+              Voltar ao site
+            </Button>
+          </div>
         </div>
+      </header>
 
-        <Tabs defaultValue="signin" className="mt-8">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="signin">Entrar</TabsTrigger>
-            <TabsTrigger value="signup">Criar conta</TabsTrigger>
-          </TabsList>
+      <div className="flex items-center justify-center px-4 py-12">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <Logo size="lg" />
+            <h2 className="mt-6 text-3xl font-bold text-[#333333]">Let's go OUT!</h2>
+            <p className="mt-2 text-[#6F6F6F]">
+              Encontre amigos para fazer aquilo que move a vida
+            </p>
+          </div>
 
-          <TabsContent value="signin">
-            <form onSubmit={handleSignIn} className="space-y-6">
-              <div>
-                <Input
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? 'Entrando...' : 'Entrar'}
-              </Button>
-            </form>
-          </TabsContent>
+          <Tabs defaultValue="signin" className="mt-8 bg-white rounded-lg shadow-lg p-6">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Entrar</TabsTrigger>
+              <TabsTrigger value="signup">Criar conta</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="signup">
-            <form onSubmit={handleSignUp} className="space-y-6">
-              <div>
-                <Input
-                  type="email"
-                  placeholder="seu@email.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Senha (mínimo 6 caracteres)"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Confirme a senha"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full"
-                />
-              </div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading}
-              >
-                {loading ? 'Criando conta...' : 'Criar conta'}
-              </Button>
-            </form>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="signin">
+              <form onSubmit={handleSignIn} className="space-y-6">
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Senha"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-[#B6463A] hover:bg-[#A23F35]"
+                  disabled={loading}
+                >
+                  {loading ? 'Entrando...' : 'Entrar'}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="signup">
+              <form onSubmit={handleSignUp} className="space-y-6">
+                <div>
+                  <Input
+                    type="email"
+                    placeholder="seu@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Senha (mínimo 6 caracteres)"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <div>
+                  <Input
+                    type="password"
+                    placeholder="Confirme a senha"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                    className="w-full"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  className="w-full bg-[#B6463A] hover:bg-[#A23F35]"
+                  disabled={loading}
+                >
+                  {loading ? 'Criando conta...' : 'Criar conta'}
+                </Button>
+                <p className="text-xs text-center text-[#6F6F6F] mt-4">
+                  Ao criar sua conta, você concorda com nossos{' '}
+                  <a href="/terms" className="text-[#B6463A] hover:underline">Termos de Uso</a>
+                  {' '}e{' '}
+                  <a href="/privacy" className="text-[#B6463A] hover:underline">Política de Privacidade</a>.
+                </p>
+              </form>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </div>
   );
