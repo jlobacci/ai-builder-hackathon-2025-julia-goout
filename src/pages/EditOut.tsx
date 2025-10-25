@@ -47,6 +47,7 @@ const EditOut: React.FC = () => {
     title: '',
     description: '',
     hobby_id: null as number | null,
+    custom_hobby: '',
     city: '',
     slots: 3,
     bring_own_materials: false,
@@ -107,6 +108,7 @@ const EditOut: React.FC = () => {
         title: invite.title || '',
         description: invite.description || '',
         hobby_id: invite.hobby_id,
+        custom_hobby: invite.custom_hobby || '',
         city: invite.city || '',
         slots: invite.slots || 3,
         bring_own_materials: invite.bring_own_materials || false,
@@ -195,6 +197,7 @@ const EditOut: React.FC = () => {
           title: formData.title,
           description: formData.description || null,
           hobby_id: formData.hobby_id,
+          custom_hobby: formData.custom_hobby || null,
           city: formData.city || null,
           time_label: time_label,
           time_is_fixed: formData.time_is_fixed,
@@ -302,6 +305,19 @@ const EditOut: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div>
+              <Label htmlFor="custom_hobby">Outro hobby (opcional)</Label>
+              <Input
+                id="custom_hobby"
+                value={formData.custom_hobby}
+                onChange={(e) => setFormData({ ...formData, custom_hobby: e.target.value })}
+                placeholder="Se não encontrou seu hobby na lista, digite aqui..."
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Especifique um hobby que não está na lista acima
+              </p>
             </div>
 
             <div>

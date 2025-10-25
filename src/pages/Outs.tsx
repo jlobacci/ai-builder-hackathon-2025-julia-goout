@@ -115,8 +115,10 @@ const Outs: React.FC = () => {
                     <div className="flex-1">
                       <CardTitle className="text-xl mb-2">{out.title}</CardTitle>
                       <div className="flex items-center gap-2 mb-2">
-                        {out.hobby && (
-                          <Badge variant="secondary">{out.hobby.name}</Badge>
+                        {(out.hobby || out.custom_hobby) && (
+                          <Badge variant="secondary">
+                            {out.hobby?.name || out.custom_hobby}
+                          </Badge>
                         )}
                         <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
                       </div>

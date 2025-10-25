@@ -192,8 +192,10 @@ const MyOuts: React.FC = () => {
                             )}
                           </div>
                           <div className="flex items-center gap-2 mt-2">
-                            {out.hobby && (
-                              <Badge variant="secondary">{out.hobby.name}</Badge>
+                            {(out.hobby || out.custom_hobby) && (
+                              <Badge variant="secondary">
+                                {out.hobby?.name || out.custom_hobby}
+                              </Badge>
                             )}
                             <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
                           </div>
@@ -280,8 +282,10 @@ const MyOuts: React.FC = () => {
                         )}
                       </div>
                       <div className="flex items-center gap-2">
-                        {app.invite.hobby && (
-                          <Badge variant="secondary">{app.invite.hobby.name}</Badge>
+                        {(app.invite.hobby || app.invite.custom_hobby) && (
+                          <Badge variant="secondary">
+                            {app.invite.hobby?.name || app.invite.custom_hobby}
+                          </Badge>
                         )}
                         <Badge className="badge-mode">{getModeLabel(app.invite.mode)}</Badge>
                         <Badge variant={app.status === 'aceito' ? 'default' : 'secondary'}>

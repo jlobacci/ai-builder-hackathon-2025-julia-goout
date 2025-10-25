@@ -189,6 +189,7 @@ export type Database = {
           bring_own_materials: boolean | null
           city: string | null
           created_at: string | null
+          custom_hobby: string | null
           description: string | null
           hobby_id: number | null
           id: number
@@ -209,6 +210,7 @@ export type Database = {
           bring_own_materials?: boolean | null
           city?: string | null
           created_at?: string | null
+          custom_hobby?: string | null
           description?: string | null
           hobby_id?: number | null
           id?: number
@@ -229,6 +231,7 @@ export type Database = {
           bring_own_materials?: boolean | null
           city?: string | null
           created_at?: string | null
+          custom_hobby?: string | null
           description?: string | null
           hobby_id?: number | null
           id?: number
@@ -838,7 +841,8 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never

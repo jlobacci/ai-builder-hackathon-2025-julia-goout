@@ -22,6 +22,7 @@ interface OutResult {
   created_at: string;
   author_id: string;
   hobby_id: number | null;
+  custom_hobby: string | null;
   hobby?: { name: string };
   author?: { display_name: string; avatar_url: string | null };
 }
@@ -283,8 +284,10 @@ export default function Search() {
                               <h3 className="font-semibold text-lg">{out.title}</h3>
                               
                               <div className="flex flex-wrap items-center gap-2">
-                                {out.hobby?.name && (
-                                  <Badge className="badge-mode">{out.hobby.name}</Badge>
+                                {(out.hobby?.name || out.custom_hobby) && (
+                                  <Badge className="badge-mode">
+                                    {out.hobby?.name || out.custom_hobby}
+                                  </Badge>
                                 )}
                                 {out.city && (
                                   <span className="text-sm text-muted-foreground flex items-center gap-1">

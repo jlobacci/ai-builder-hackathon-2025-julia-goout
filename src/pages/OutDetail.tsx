@@ -130,8 +130,10 @@ const OutDetail: React.FC = () => {
               <div className="flex-1">
                 <CardTitle className="text-3xl mb-3">{out.title}</CardTitle>
                 <div className="flex items-center gap-2 mb-3">
-                  {out.hobby && (
-                    <Badge variant="secondary">{out.hobby.name}</Badge>
+                  {(out.hobby || out.custom_hobby) && (
+                    <Badge variant="secondary">
+                      {out.hobby?.name || out.custom_hobby}
+                    </Badge>
                   )}
                   <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
                 </div>
