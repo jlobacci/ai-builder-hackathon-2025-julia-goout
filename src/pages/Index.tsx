@@ -48,7 +48,7 @@ const Index = () => {
             {/* Text Column */}
             <div className="space-y-6">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[#333333]">
-                Let's Go out
+                Let's Go out!
               </h1>
               <h2 className="text-lg sm:text-xl text-[#6F6F6F] leading-relaxed">
                 O app para quem quer viver mais, encontrar pessoas com os mesmos interesses, 
