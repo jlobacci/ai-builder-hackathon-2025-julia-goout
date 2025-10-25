@@ -97,16 +97,17 @@ const Index = () => {
                 </h2>
                 <div className="space-y-4 text-[#6F6F6F] text-base sm:text-lg max-w-4xl mx-auto">
                   <p>
-                    A teoria do terceiro lugar fala sobre os espaços onde nos sentimos parte de algo: cafés, praças,
-                    parques, estúdios, quadras, livrarias.
+                    Para além do trabalho e de casa, temos um terceiro lugar para ocupar: a cidade, espaços onde nos
+                    sentimos parte de algo: cafés, praças, parques, estúdios, quadras, livrarias. São esses lugares que
+                    despertam o convívio, a troca e a criatividade.
                   </p>
-                  <p>São esses lugares que despertam o convívio, a troca e a criatividade.</p>
                   <p>
-                    O Let's Go ou nasceu para te tirar da rotina, te conectar com pessoas e te inspirar a ocupar a
-                    cidade com propósito.
+                    O goOut nasceu para te tirar da rotina, te conectar com pessoas e te inspirar a ocupar a cidade com
+                    propósito.
                   </p>
                   <p className="font-semibold text-[#333333]">
-                    Mais do que um app: um movimento para quem quer viver mais, aprender mais e se conectar de verdade.
+                    Mais do que uma rede social: um movimento para quem quer viver mais, aprender mais e se conectar de
+                    verdade.
                   </p>
                 </div>
               </div>
