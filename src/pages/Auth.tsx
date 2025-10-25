@@ -15,7 +15,6 @@ const emailSchema = z.object({
 const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [emailSent, setEmailSent] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -55,43 +54,44 @@ const Auth: React.FC = () => {
 
     setLoading(true);
 
-    const redirectUrl = `${window.location.origin}/auth`;
-
-    const { error } = await supabase.auth.signInWithOtp({
+    // Cria usuário automaticamente sem verificação de email
+    const randomPassword = Math.random().toString(36).slice(-16);
+    const { data, error } = await supabase.auth.signUp({
       email,
+      password: randomPassword,
       options: {
-        emailRedirectTo: redirectUrl,
+        emailRedirectTo: `${window.location.origin}/onboarding`,
+        data: {
+          auto_created: true,
+        },
       },
     });
 
-    if (error) {
+    if (error && error.message.includes('already registered')) {
+      // Se já existe, faz login
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: randomPassword,
+      });
+      
+      if (signInError) {
+        // Tenta criar com nova senha
+        const newPassword = Math.random().toString(36).slice(-16);
+        await supabase.auth.signUp({
+          email,
+          password: newPassword,
+        });
+      }
+    } else if (error) {
       toast.error(error.message);
-    } else {
-      setEmailSent(true);
-      toast.success('Link mágico enviado! Verifique seu e-mail.');
+      setLoading(false);
+      return;
     }
 
     setLoading(false);
+    navigate('/onboarding');
   };
 
-  if (emailSent) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="max-w-md w-full space-y-8 p-8">
-          <div className="text-center">
-            <Logo size="lg" />
-            <h2 className="mt-6 text-3xl font-bold">Verifique seu e-mail</h2>
-            <p className="mt-2 text-muted-foreground">
-              Enviamos um link de acesso para <strong>{email}</strong>
-            </p>
-            <p className="mt-4 text-sm text-muted-foreground">
-              Clique no link para entrar na plataforma.
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
