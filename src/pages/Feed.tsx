@@ -9,7 +9,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { Heart, MessageCircle, ImagePlus, X, Loader2 } from 'lucide-react';
+import { Heart, MessageCircle, ImagePlus, X, Loader2, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
@@ -82,6 +95,8 @@ const Feed: React.FC = () => {
   const [comments, setComments] = useState<Record<number, Comment[]>>({});
   const [commentText, setCommentText] = useState<Record<number, string>>({});
   const [mentionPopoverOpen, setMentionPopoverOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editingBody, setEditingBody] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -293,14 +308,13 @@ const Feed: React.FC = () => {
     }
   };
 
-  const toggleCommentsPanel = (postId: number) => {
+  const toggleCommentsPanel = async (postId: number) => {
     if (openComments === postId) {
       setOpenComments(null);
     } else {
       setOpenComments(postId);
-      if (!comments[postId]) {
-        loadCommentsForPost(postId);
-      }
+      // Always load comments when opening
+      await loadCommentsForPost(postId);
     }
   };
 
@@ -318,6 +332,52 @@ const Feed: React.FC = () => {
     } catch (error) {
       console.error('Error posting comment:', error);
       toast({ title: 'Erro ao comentar', variant: 'destructive' });
+    }
+  };
+
+  const handleDeletePost = async (postId: number) => {
+    if (!confirm('Tem certeza que deseja deletar esta publicação?')) return;
+
+    try {
+      // Delete post (cascades will handle images, mentions, likes, comments)
+      const { error } = await supabase
+        .from('posts' as any)
+        .delete()
+        .eq('id', postId);
+
+      if (error) throw error;
+
+      toast({ title: 'Publicação deletada com sucesso!' });
+      loadPosts();
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      toast({ title: 'Erro ao deletar publicação', variant: 'destructive' });
+    }
+  };
+
+  const openEditDialog = (post: Post) => {
+    setEditingPost(post);
+    setEditingBody(post.body || '');
+  };
+
+  const handleUpdatePost = async () => {
+    if (!editingPost) return;
+
+    try {
+      const { error } = await supabase
+        .from('posts' as any)
+        .update({ body: editingBody.trim() || null })
+        .eq('id', editingPost.id);
+
+      if (error) throw error;
+
+      toast({ title: 'Publicação editada com sucesso!' });
+      setEditingPost(null);
+      setEditingBody('');
+      loadPosts();
+    } catch (error) {
+      console.error('Error updating post:', error);
+      toast({ title: 'Erro ao editar publicação', variant: 'destructive' });
     }
   };
 
@@ -476,6 +536,30 @@ const Feed: React.FC = () => {
                       </span>
                     </div>
                   </div>
+                  
+                  {/* Post actions menu (only for post author) */}
+                  {post.author_id === user?.id && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openEditDialog(post)}>
+                          <Pencil className="h-4 w-4 mr-2" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleDeletePost(post.id)}
+                          className="text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Deletar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
 
                 {/* Body */}
@@ -609,6 +693,29 @@ const Feed: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* Edit Post Dialog */}
+      <Dialog open={!!editingPost} onOpenChange={(open) => !open && setEditingPost(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Publicação</DialogTitle>
+          </DialogHeader>
+          <Textarea
+            value={editingBody}
+            onChange={(e) => setEditingBody(e.target.value)}
+            placeholder="O que você está fazendo hoje?"
+            className="min-h-[150px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingPost(null)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleUpdatePost} className="bg-primary hover:bg-primary-hover">
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 };
