@@ -106,7 +106,10 @@ export const UpcomingEvents: React.FC = () => {
       return a.start_time.localeCompare(b.start_time);
     });
 
-    setEvents(allSlots.slice(0, 3));
+    // Filter out events with null invites (deleted invites)
+    const validEvents = allSlots.filter(e => e.invite !== null);
+    
+    setEvents(validEvents.slice(0, 3));
     setLoading(false);
   };
 
