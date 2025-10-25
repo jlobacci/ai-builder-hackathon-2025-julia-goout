@@ -65,12 +65,15 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { path: '/feed', icon: Home, label: 'Feed' },
     { path: '/my-outs', icon: Calendar, label: 'Meus Outs' },
-    { path: '/create-out', icon: PlusCircle, label: 'Criar Out' },
+    { path: '/out/new', icon: PlusCircle, label: 'Criar Out' },
     { path: '/messages', icon: MessageCircle, label: 'Mensagens' },
     { path: '/profile', icon: User, label: 'Perfil' },
   ];
 
   const isActive = (path: string) => location.pathname === path;
+
+  // Hide profile card on profile pages
+  const isProfilePage = location.pathname === '/profile' || location.pathname.startsWith('/u/');
 
   return (
     <div className="min-h-screen flex flex-col w-full bg-background">
@@ -224,19 +227,27 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Main Content Area */}
       <div className="flex-1 pt-16">
         <div className="max-w-7xl mx-auto px-4 py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-            {/* Left Sidebar - Profile Card (Desktop only) */}
-            <aside className="hidden lg:block">
-              <ProfileCard />
-            </aside>
-
-            {/* Main Content */}
+          {isProfilePage ? (
+            // Profile page - no sidebar, full width
             <main className="min-h-[calc(100vh-8rem)]">
-              <div className="max-w-3xl mx-auto">
-                {children}
-              </div>
+              {children}
             </main>
-          </div>
+          ) : (
+            // Other pages - with sidebar
+            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-4 xl:gap-6">
+              {/* Left Sidebar - Profile Card (Desktop only) */}
+              <aside className="hidden lg:block">
+                <ProfileCard />
+              </aside>
+
+              {/* Main Content */}
+              <main className="min-h-[calc(100vh-8rem)]">
+                <div className="max-w-3xl">
+                  {children}
+                </div>
+              </main>
+            </div>
+          )}
         </div>
       </div>
     </div>
