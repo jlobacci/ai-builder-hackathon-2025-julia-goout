@@ -556,7 +556,10 @@ const Feed: React.FC = () => {
               <CardContent className="pt-6 space-y-4">
                 {/* Header */}
                 <div className="flex items-start gap-3">
-                  <Avatar className="h-10 w-10">
+                  <Avatar 
+                    className="h-10 w-10 avatar-clickable"
+                    onClick={() => navigate(`/u/${post.profiles?.handle}`)}
+                  >
                     <AvatarImage src={post.profiles?.avatar_url} />
                     <AvatarFallback className="bg-primary text-primary-foreground">
                       {post.profiles?.display_name[0] || 'U'}
@@ -564,7 +567,12 @@ const Feed: React.FC = () => {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-semibold">{post.profiles?.display_name}</span>
+                      <span 
+                        className="font-semibold cursor-pointer hover:underline"
+                        onClick={() => navigate(`/u/${post.profiles?.handle}`)}
+                      >
+                        {post.profiles?.display_name}
+                      </span>
                       <span
                         className="text-sm text-muted-foreground cursor-pointer hover:underline"
                         onClick={() => navigate(`/u/${post.profiles?.handle}`)}
@@ -689,7 +697,10 @@ const Feed: React.FC = () => {
                   <div className="space-y-4 pt-4 border-t">
                     {comments[post.id]?.map((comment) => (
                       <div key={comment.id} className="flex gap-3">
-                        <Avatar className="h-8 w-8">
+                        <Avatar 
+                          className="h-8 w-8 avatar-clickable"
+                          onClick={() => navigate(`/u/${comment.profiles?.handle}`)}
+                        >
                           <AvatarImage src={comment.profiles?.avatar_url} />
                           <AvatarFallback className="text-xs">
                             {comment.profiles?.display_name[0] || 'U'}
@@ -697,7 +708,10 @@ const Feed: React.FC = () => {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-baseline gap-2">
-                            <span className="font-medium text-sm">
+                            <span 
+                              className="font-medium text-sm cursor-pointer hover:underline"
+                              onClick={() => navigate(`/u/${comment.profiles?.handle}`)}
+                            >
                               {comment.profiles?.display_name}
                             </span>
                             <span className="text-xs text-muted-foreground">

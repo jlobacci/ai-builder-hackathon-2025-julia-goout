@@ -8,66 +8,66 @@
 
 @layer base {
   :root {
-    /* Core - LinkedIn-inspired gray canvas */
-    --background: 30 7% 95%; /* #F3F2EF */
-    --foreground: 0 0% 15%;
+    /* Core - Apple-inspired light canvas */
+    --background: 0 0% 97%; /* #F8F8F8 - Mais claro e respirado */
+    --foreground: 0 0% 13%; /* #222222 - Texto primário */
 
-    /* Cards - Subtle elevation */
+    /* Cards - Subtle elevation with soft shadows */
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 15%;
+    --card-foreground: 0 0% 13%;
 
     /* Popovers */
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
+    --popover-foreground: 0 0% 13%;
 
-    /* Primary - Burnt Red */
-    --primary: 7 51% 47%;
+    /* Primary - Burnt Red (mantém identidade) */
+    --primary: 7 51% 47%; /* #B6463A */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 7 51% 42%;
-    --primary-light: 7 51% 95%;
+    --primary-hover: 7 51% 55%; /* #C75B50 - Hover mais claro */
+    --primary-light: 7 51% 97%;
 
-    /* Secondary - Neutral Gray */
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 15%;
+    /* Secondary - Soft neutral */
+    --secondary: 0 0% 98%;
+    --secondary-foreground: 0 0% 13%;
 
-    /* Muted - Subtle backgrounds */
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    /* Muted - Very subtle backgrounds */
+    --muted: 0 0% 98%; /* #FAFAFA */
+    --muted-foreground: 0 0% 42%; /* #6B6B6B - Texto secundário */
 
     /* Accent - Lighter burnt red */
-    --accent: 7 51% 95%;
+    --accent: 7 51% 97%;
     --accent-foreground: 7 51% 47%;
 
     /* Destructive */
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    /* Borders - Light gray */
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
+    /* Borders - Ultra subtle */
+    --border: 0 0% 95%; /* rgba(0,0,0,0.05) */
+    --input: 0 0% 98%;
     --ring: 7 51% 47%;
 
     /* Success - Green for verified badges */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
-    --success-light: 142 76% 95%;
+    --success-light: 142 76% 97%;
 
     /* Warning - Orange for unverified */
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
-    --warning-light: 38 92% 95%;
+    --warning-light: 38 92% 97%;
 
-    /* Radius */
-    --radius: 0.5rem;
+    /* Radius - Mais arredondado (Apple-like) */
+    --radius: 0.75rem; /* 12px */
 
     /* Sidebar - Fixed left navigation */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 15%;
+    --sidebar-foreground: 0 0% 13%;
     --sidebar-primary: 7 51% 47%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 15%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-accent: 0 0% 98%;
+    --sidebar-accent-foreground: 0 0% 13%;
+    --sidebar-border: 0 0% 95%;
     --sidebar-ring: 7 51% 47%;
   }
 }
@@ -80,32 +80,45 @@
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-family: 'Red Hat Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-semibold;
+    font-weight: 600;
   }
 }
 
 @layer components {
-  /* Primary Button - Burnt Red */
+  /* Primary Button - Burnt Red with soft shadow */
   .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-[hsl(var(--primary-hover))] transition-colors;
+    @apply bg-primary text-primary-foreground hover:bg-[hsl(var(--primary-hover))] 
+           transition-all duration-200 ease-in-out
+           shadow-[0_2px_4px_rgba(0,0,0,0.08)] hover:shadow-[0_4px_8px_rgba(0,0,0,0.12)];
   }
 
   /* Verified Badge */
   .badge-verified {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--success-light))] text-[hsl(var(--success))];
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium 
+           bg-[hsl(var(--success-light))] text-[hsl(var(--success))];
   }
 
   /* Unverified Badge */
   .badge-unverified {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))];
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium 
+           bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))];
   }
 
   /* Mode Badge */
   .badge-mode {
-    @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-accent text-accent-foreground;
+    @apply inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-medium 
+           bg-accent text-accent-foreground;
+  }
+
+  /* Avatar Clickable */
+  .avatar-clickable {
+    @apply cursor-pointer transition-all duration-200 ease-in-out 
+           hover:opacity-80 hover:scale-105;
   }
 
   /* Fade in animation */

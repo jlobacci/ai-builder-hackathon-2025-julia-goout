@@ -47,7 +47,7 @@ export const ProfileCard: React.FC = () => {
       className="sticky top-20 w-full bg-card shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
       onClick={() => navigate('/profile')}
     >
-      <CardContent className="p-4 flex flex-col items-center text-center space-y-3">
+      <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
         <Avatar className="w-20 h-20 border-2 border-primary/10">
           <AvatarImage src={profile.avatar_url || undefined} />
           <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
@@ -56,13 +56,13 @@ export const ProfileCard: React.FC = () => {
         </Avatar>
 
         <div className="w-full">
-          <h3 className="font-semibold text-foreground">{profile.display_name}</h3>
+          <h3 className="font-semibold text-foreground text-lg">{profile.display_name}</h3>
           <p className="text-sm text-muted-foreground">@{profile.handle}</p>
         </div>
 
         {hobbies.length > 0 && (
-          <div className="w-full pt-2 border-t">
-            <p className="text-xs text-muted-foreground mb-2 font-medium">Meus Hobbies</p>
+          <div className="w-full pt-3 border-t">
+            <p className="text-xs text-muted-foreground mb-2.5 font-medium">Meus Hobbies</p>
             <div className="flex flex-wrap gap-1.5 justify-center">
               {hobbies.map((uh) => (
                 <Badge 

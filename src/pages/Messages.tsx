@@ -392,9 +392,9 @@ const Messages: React.FC = () => {
 
   return (
     <Layout>
-      <div className="h-[calc(100vh-4rem)] flex">
+      <div className="max-w-6xl mx-auto h-[calc(100vh-120px)] flex gap-4 bg-card rounded-2xl shadow-[0_2px_6px_rgba(0,0,0,0.05)] p-6">
         {/* Left Sidebar - Threads */}
-        <div className="w-80 border-r bg-background flex flex-col">
+        <div className="w-80 border-r border-border pr-4 flex flex-col">
           <ScrollArea className="flex-1">
             <div className="p-4 space-y-2">
               {/* Events Accordion */}
@@ -547,10 +547,26 @@ const Messages: React.FC = () => {
                                       outMessages[idx + 1]?.sender_id !== msg.sender_id;
                     
                     return (
-                      <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
+                       <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                         <div className={`flex gap-2 max-w-[70%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                           {!isMe && showAvatar && (
-                            <Avatar className="w-8 h-8 flex-shrink-0">
+                            <Avatar 
+                              className="w-8 h-8 flex-shrink-0 avatar-clickable"
+                              onClick={() => {
+                                // Get sender's handle
+                                const msgData = outMessages.find(m => m.id === msg.id);
+                                const senderProfile = eventThreads.find(t => t.invite_id === selectedInviteId);
+                                // Navigate to profile (we need to fetch the handle first)
+                                supabase
+                                  .from('profiles')
+                                  .select('handle')
+                                  .eq('user_id', msg.sender_id)
+                                  .single()
+                                  .then(({ data }) => {
+                                    if (data) navigate(`/u/${data.handle}`);
+                                  });
+                              }}
+                            >
                               <AvatarImage src={msg.sender.avatar_url || undefined} />
                               <AvatarFallback>{msg.sender.display_name[0]}</AvatarFallback>
                             </Avatar>
@@ -559,7 +575,19 @@ const Messages: React.FC = () => {
                           
                           <div className={`space-y-1 ${isMe ? 'items-end' : 'items-start'}`}>
                             {!isMe && (
-                              <p className="text-xs text-muted-foreground px-3">
+                              <p 
+                                className="text-xs text-muted-foreground px-3 cursor-pointer hover:underline"
+                                onClick={() => {
+                                  supabase
+                                    .from('profiles')
+                                    .select('handle')
+                                    .eq('user_id', msg.sender_id)
+                                    .single()
+                                    .then(({ data }) => {
+                                      if (data) navigate(`/u/${data.handle}`);
+                                    });
+                                }}
+                              >
                                 {msg.sender.display_name}
                               </p>
                             )}
@@ -596,7 +624,19 @@ const Messages: React.FC = () => {
                       <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
                         <div className={`flex gap-2 max-w-[70%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
                           {!isMe && showAvatar && (
-                            <Avatar className="w-8 h-8 flex-shrink-0">
+                            <Avatar 
+                              className="w-8 h-8 flex-shrink-0 avatar-clickable"
+                              onClick={() => {
+                                supabase
+                                  .from('profiles')
+                                  .select('handle')
+                                  .eq('user_id', msg.sender_id)
+                                  .single()
+                                  .then(({ data }) => {
+                                    if (data) navigate(`/u/${data.handle}`);
+                                  });
+                              }}
+                            >
                               <AvatarImage src={profile?.avatar_url || undefined} />
                               <AvatarFallback>{profile?.display_name?.[0] || '?'}</AvatarFallback>
                             </Avatar>
