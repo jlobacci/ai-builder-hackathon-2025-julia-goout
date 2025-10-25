@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Badge } from '@/components/ui/badge';
-import { Card } from '@/components/ui/card';
 
 interface CalendarSlot {
   id: number;
@@ -39,6 +37,15 @@ export const CalendarView: React.FC = () => {
   
   const [currentDate, setCurrentDate] = useState(getInitialDate());
   const [slots, setSlots] = useState<CalendarSlot[]>([]);
+  const [filters, setFilters] = useState({
+    author: true,
+    accepted: true,
+    pending: true
+  });
+
+  const toggleFilter = (key: keyof typeof filters) => {
+    setFilters(prev => ({ ...prev, [key]: !prev[key] }));
+  };
 
   useEffect(() => {
     if (user) {
@@ -137,7 +144,16 @@ export const CalendarView: React.FC = () => {
   const getSlotsForDate = (date: Date | null) => {
     if (!date) return [];
     const dateString = date.toISOString().split('T')[0];
-    return slots.filter(s => s.date === dateString);
+    return slots.filter(s => {
+      if (s.date !== dateString) return false;
+      
+      // Apply filters
+      if (s.isAuthor && !filters.author) return false;
+      if (!s.isAuthor && s.applicationStatus === 'aceito' && !filters.accepted) return false;
+      if (!s.isAuthor && s.applicationStatus !== 'aceito' && !filters.pending) return false;
+      
+      return true;
+    });
   };
 
   const updateMonth = (newDate: Date) => {
@@ -179,6 +195,47 @@ export const CalendarView: React.FC = () => {
         </Button>
       </div>
 
+      {/* Legend with filters */}
+      <div className="flex items-center justify-center gap-4 mb-4 p-3 bg-muted/30 rounded-lg">
+        <span className="text-sm font-medium text-muted-foreground">Legenda:</span>
+        
+        <button
+          onClick={() => toggleFilter('author')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all ${
+            filters.author 
+              ? 'bg-[#B6463A] text-white shadow-sm' 
+              : 'bg-background text-muted-foreground border'
+          }`}
+        >
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#B6463A' }} />
+          <span className="text-sm">Criados por mim</span>
+        </button>
+
+        <button
+          onClick={() => toggleFilter('accepted')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all ${
+            filters.accepted 
+              ? 'bg-[#16A34A] text-white shadow-sm' 
+              : 'bg-background text-muted-foreground border'
+          }`}
+        >
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#16A34A' }} />
+          <span className="text-sm">Aceitos</span>
+        </button>
+
+        <button
+          onClick={() => toggleFilter('pending')}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-md transition-all ${
+            filters.pending 
+              ? 'bg-[#D0D5DD] text-foreground shadow-sm' 
+              : 'bg-background text-muted-foreground border'
+          }`}
+        >
+          <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: '#D0D5DD' }} />
+          <span className="text-sm">Pendentes</span>
+        </button>
+      </div>
+
       <div className="grid grid-cols-7 gap-2">
         {weekDays.map((day) => (
           <div key={day} className="text-center text-sm font-medium text-muted-foreground p-2">
@@ -208,9 +265,9 @@ export const CalendarView: React.FC = () => {
                   </div>
                   <div className="space-y-1 max-h-24 overflow-y-auto">
                     {daySlots.slice(0, 3).map((slot) => (
-                      <Card
+                      <div
                         key={slot.id}
-                        className="p-2 cursor-pointer hover:shadow-md transition-shadow border-l-4"
+                        className="p-1.5 cursor-pointer hover:shadow-sm transition-shadow rounded border-l-4 bg-background"
                         style={{
                           borderLeftColor: slot.isAuthor 
                             ? '#B6463A' 
@@ -221,37 +278,13 @@ export const CalendarView: React.FC = () => {
                         onClick={() => handleEventClick(slot.invite.id)}
                         title={`${slot.invite.title} — ${slot.start_time.substring(0, 5)}–${slot.end_time.substring(0, 5)} — clique para ver detalhes`}
                       >
-                        <div className="flex items-start gap-2">
-                          <Calendar className="w-3 h-3 mt-0.5 text-muted-foreground flex-shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium truncate">
-                              {slot.invite.title}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {slot.start_time.substring(0, 5)}–{slot.end_time.substring(0, 5)}
-                            </p>
-                            <Badge 
-                              variant="secondary" 
-                              className="text-xs mt-1"
-                              style={{
-                                backgroundColor: slot.isAuthor 
-                                  ? '#B6463A' 
-                                  : slot.applicationStatus === 'aceito'
-                                  ? '#16A34A'
-                                  : '#D0D5DD',
-                                color: 'white'
-                              }}
-                            >
-                              {slot.isAuthor 
-                                ? 'Meus Outs' 
-                                : slot.applicationStatus === 'aceito'
-                                ? 'Aceito'
-                                : 'Pendente'
-                              }
-                            </Badge>
-                          </div>
-                        </div>
-                      </Card>
+                        <p className="text-xs font-medium truncate leading-tight">
+                          {slot.invite.title}
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-tight">
+                          {slot.start_time.substring(0, 5)}–{slot.end_time.substring(0, 5)}
+                        </p>
+                      </div>
                     ))}
                     {daySlots.length > 3 && (
                       <p className="text-xs text-muted-foreground text-center">
