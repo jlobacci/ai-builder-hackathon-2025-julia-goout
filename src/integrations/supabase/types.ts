@@ -361,6 +361,228 @@ export type Database = {
           },
         ]
       }
+      post_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string | null
+          id: number
+          post_id: number
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string | null
+          id?: number
+          post_id: number
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string | null
+          id?: number
+          post_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "post_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "v_posts_counts"
+            referencedColumns: ["post_id"]
+          },
+        ]
+      }
+      post_images: {
+        Row: {
+          created_at: string | null
+          id: number
+          post_id: number
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          post_id: number
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          post_id?: number
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_images_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_images_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "v_posts_counts"
+            referencedColumns: ["post_id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string | null
+          post_id: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          post_id: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          post_id?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "v_posts_counts"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      post_mentions: {
+        Row: {
+          created_at: string | null
+          id: number
+          mentioned_user_id: string
+          post_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          mentioned_user_id: string
+          post_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          mentioned_user_id?: string
+          post_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "post_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "post_mentions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_mentions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "v_posts_counts"
+            referencedColumns: ["post_id"]
+          },
+        ]
+      }
+      posts: {
+        Row: {
+          author_id: string
+          body: string | null
+          created_at: string | null
+          id: number
+        }
+        Insert: {
+          author_id: string
+          body?: string | null
+          created_at?: string | null
+          id?: number
+        }
+        Update: {
+          author_id?: string
+          body?: string | null
+          created_at?: string | null
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+          {
+            foreignKeyName: "posts_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "v_profile_ratings"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -584,6 +806,24 @@ export type Database = {
             referencedColumns: ["user_id"]
           },
         ]
+      }
+      v_posts_counts: {
+        Row: {
+          comments_count: number | null
+          likes_count: number | null
+          post_id: number | null
+        }
+        Insert: {
+          comments_count?: never
+          likes_count?: never
+          post_id?: number | null
+        }
+        Update: {
+          comments_count?: never
+          likes_count?: never
+          post_id?: number | null
+        }
+        Relationships: []
       }
       v_profile_ratings: {
         Row: {

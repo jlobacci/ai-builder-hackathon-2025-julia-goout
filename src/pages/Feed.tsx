@@ -513,12 +513,16 @@ const Feed: React.FC = () => {
                     {post.post_images.map((img) => (
                       <div
                         key={img.id}
-                        className="aspect-square rounded-xl overflow-hidden bg-muted"
+                        className={`rounded-xl overflow-hidden bg-muted ${
+                          post.post_images!.length === 1 ? 'w-full' : 'aspect-square'
+                        }`}
                       >
                         <img
                           src={img.url}
                           alt=""
-                          className="w-full h-full object-cover"
+                          className={`w-full object-cover ${
+                            post.post_images!.length === 1 ? 'max-h-[600px]' : 'h-full'
+                          }`}
                         />
                       </div>
                     ))}
