@@ -97,6 +97,7 @@ const Feed: React.FC = () => {
   const [mentionPopoverOpen, setMentionPopoverOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editingBody, setEditingBody] = useState('');
+  const [editingMentions, setEditingMentions] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -358,22 +359,65 @@ const Feed: React.FC = () => {
   const openEditDialog = (post: Post) => {
     setEditingPost(post);
     setEditingBody(post.body || '');
+    // Load current mentions
+    const currentMentions = post.post_mentions?.map(m => m.mentioned_user_id) || [];
+    setEditingMentions(currentMentions);
+  };
+
+  const toggleEditMention = (userId: string) => {
+    setEditingMentions(
+      editingMentions.includes(userId)
+        ? editingMentions.filter((id) => id !== userId)
+        : [...editingMentions, userId]
+    );
   };
 
   const handleUpdatePost = async () => {
     if (!editingPost) return;
 
     try {
-      const { error } = await supabase
+      // Update post body
+      const { error: updateError } = await supabase
         .from('posts' as any)
         .update({ body: editingBody.trim() || null })
         .eq('id', editingPost.id);
 
-      if (error) throw error;
+      if (updateError) throw updateError;
+
+      // Get current mentions
+      const { data: currentMentions } = await supabase
+        .from('post_mentions' as any)
+        .select('mentioned_user_id')
+        .eq('post_id', editingPost.id);
+
+      const currentMentionIds = currentMentions?.map((m: any) => m.mentioned_user_id) || [];
+
+      // Find mentions to add and remove
+      const mentionsToAdd = editingMentions.filter(id => !currentMentionIds.includes(id));
+      const mentionsToRemove = currentMentionIds.filter((id: string) => !editingMentions.includes(id));
+
+      // Add new mentions
+      if (mentionsToAdd.length > 0) {
+        const newMentions = mentionsToAdd.map(userId => ({
+          post_id: editingPost.id,
+          mentioned_user_id: userId
+        }));
+        await supabase.from('post_mentions' as any).insert(newMentions);
+      }
+
+      // Remove old mentions
+      if (mentionsToRemove.length > 0) {
+        await supabase
+          .from('post_mentions' as any)
+          .delete()
+          .eq('post_id', editingPost.id)
+          .in('mentioned_user_id', mentionsToRemove);
+      }
 
       toast({ title: 'Publicação editada com sucesso!' });
       setEditingPost(null);
       setEditingBody('');
+      setEditingMentions([]);
       loadPosts();
     } catch (error) {
       console.error('Error updating post:', error);
@@ -695,19 +739,88 @@ const Feed: React.FC = () => {
       </div>
 
       {/* Edit Post Dialog */}
-      <Dialog open={!!editingPost} onOpenChange={(open) => !open && setEditingPost(null)}>
-        <DialogContent>
+      <Dialog open={!!editingPost} onOpenChange={(open) => {
+        if (!open) {
+          setEditingPost(null);
+          setEditingMentions([]);
+        }
+      }}>
+        <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle>Editar Publicação</DialogTitle>
           </DialogHeader>
-          <Textarea
-            value={editingBody}
-            onChange={(e) => setEditingBody(e.target.value)}
-            placeholder="O que você está fazendo hoje?"
-            className="min-h-[150px]"
-          />
+          
+          <div className="space-y-4">
+            <Textarea
+              value={editingBody}
+              onChange={(e) => setEditingBody(e.target.value)}
+              placeholder="O que você está fazendo hoje?"
+              className="min-h-[150px]"
+            />
+
+            {/* Selected mentions display */}
+            {editingMentions.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {profiles
+                  .filter((p) => editingMentions.includes(p.user_id))
+                  .map((p) => (
+                    <Badge key={p.user_id} variant="secondary" className="gap-1">
+                      @{p.handle}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() => toggleEditMention(p.user_id)}
+                      />
+                    </Badge>
+                  ))}
+              </div>
+            )}
+
+            {/* Mention selector */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Marcar pessoas
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[300px] p-0">
+                <Command>
+                  <CommandInput placeholder="Buscar pessoa..." />
+                  <CommandEmpty>Nenhuma pessoa encontrada.</CommandEmpty>
+                  <CommandGroup className="max-h-[200px] overflow-auto">
+                    {profiles.map((profile) => (
+                      <CommandItem
+                        key={profile.user_id}
+                        onSelect={() => toggleEditMention(profile.user_id)}
+                        className="cursor-pointer"
+                      >
+                        <div className="flex items-center gap-2 flex-1">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={profile.avatar_url} />
+                            <AvatarFallback className="text-xs">
+                              {profile.display_name[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm">{profile.display_name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            @{profile.handle}
+                          </span>
+                        </div>
+                        {editingMentions.includes(profile.user_id) && (
+                          <span className="text-primary">✓</span>
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditingPost(null)}>
+            <Button variant="outline" onClick={() => {
+              setEditingPost(null);
+              setEditingMentions([]);
+            }}>
               Cancelar
             </Button>
             <Button onClick={handleUpdatePost} className="bg-primary hover:bg-primary-hover">
