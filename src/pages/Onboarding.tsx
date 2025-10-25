@@ -247,7 +247,8 @@ const Onboarding: React.FC = () => {
     setUploading(true);
 
     try {
-      const fileName = `${user.id}_${Date.now()}.jpg`;
+      // O arquivo deve estar em uma pasta com o user_id para as políticas RLS funcionarem
+      const fileName = `${user.id}/${Date.now()}.jpg`;
       console.log("Fazendo upload para:", fileName);
       
       const { error: uploadError, data } = await supabase.storage

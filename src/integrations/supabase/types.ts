@@ -596,6 +596,7 @@ export type Database = {
           handle: string
           lat: number | null
           lng: number | null
+          other_hobbies: string | null
           radius_km: number | null
           state: string | null
           user_id: string
@@ -613,6 +614,7 @@ export type Database = {
           handle: string
           lat?: number | null
           lng?: number | null
+          other_hobbies?: string | null
           radius_km?: number | null
           state?: string | null
           user_id: string
@@ -630,6 +632,7 @@ export type Database = {
           handle?: string
           lat?: number | null
           lng?: number | null
+          other_hobbies?: string | null
           radius_km?: number | null
           state?: string | null
           user_id?: string
