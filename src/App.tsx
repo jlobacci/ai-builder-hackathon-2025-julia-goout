@@ -18,6 +18,7 @@ import PublicProfile from "./pages/PublicProfile";
 import About from "./pages/About";
 import Feed from "./pages/Feed";
 import Notifications from "./pages/Notifications";
+import Search from "./pages/Search";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -45,6 +46,7 @@ const App = () => (
             <Route path="/feed" element={<Feed />} />
             <Route path="/about" element={<About />} />
             <Route path="/notificacoes" element={<Notifications />} />
+            <Route path="/search" element={<Search />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

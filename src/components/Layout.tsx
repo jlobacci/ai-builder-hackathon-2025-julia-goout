@@ -22,7 +22,8 @@ import {
   LogOut,
   Menu,
   X,
-  Bell
+  Bell,
+  Search
 } from 'lucide-react';
 import { ProfileCard } from './ProfileCard';
 import { UpcomingEvents } from './UpcomingEvents';
@@ -68,6 +69,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems = [
     { path: '/feed', icon: Home, label: 'Feed' },
+    { path: '/search', icon: Search, label: 'Buscar' },
     { path: '/my-outs', icon: Calendar, label: 'Meus Outs' },
     { path: '/out/new', icon: PlusCircle, label: 'Criar Out' },
     { path: '/messages', icon: MessageCircle, label: 'Mensagens' },
