@@ -89,7 +89,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </button>
 
           {/* Right side - Navigation + Profile */}
-          <div className="hidden lg:flex items-center justify-between">
+          <div className="hidden lg:flex items-center max-w-[700px] w-full">
             {/* Desktop Navigation - Centered in main column */}
             <nav className="flex items-center gap-1 flex-1 justify-center">
               {navItems.map((item) => {
@@ -113,7 +113,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               })}
             </nav>
 
-            {/* Profile Avatar - Aligned with right edge of main column */}
+            {/* Profile Avatar - Aligned with right edge of main column (700px) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild className="cursor-pointer">
                 <Avatar className="w-10 h-10 border-2 border-border hover:border-primary transition-colors">
