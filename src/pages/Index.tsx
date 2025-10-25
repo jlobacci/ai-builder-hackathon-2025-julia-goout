@@ -9,7 +9,7 @@ const Index = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const heroImages = [
-    'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=600&fit=crop', // cycling
+    'https://images.unsplash.com/photo-1741926677819-c7543a44d2f2?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=680', // cycling
     'https://images.unsplash.com/photo-1510915228340-29c85a43dcfe?w=800&h=600&fit=crop', // guitar
     'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800&h=600&fit=crop', // coffee
     'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=600&fit=crop', // yoga
