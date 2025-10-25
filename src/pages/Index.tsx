@@ -10,10 +10,10 @@ const Index = () => {
 
   const heroImages = [
     'https://images.unsplash.com/photo-1741926677819-c7543a44d2f2?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=680', // cycling
-    'https://images.unsplash.com/photo-1510915228340-29c85a43dcfe?w=800&h=600&fit=crop', // guitar
-    'https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800&h=600&fit=crop', // coffee
-    'https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&h=600&fit=crop', // yoga
-    'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&h=600&fit=crop', // studying
+    'https://images.unsplash.com/photo-1739292774732-09443c4c9478?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170?w=800&h=600&fit=crop', // guitar
+    'https://plus.unsplash.com/premium_photo-1713908274212-f96df661898f?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170?w=800&h=600&fit=crop', // coffee
+    'https://images.unsplash.com/photo-1710301431924-0e337943e0cd?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=626?w=800&h=600&fit=crop', // yoga
+    'https://images.unsplash.com/photo-1624131929468-770a2689f4b9?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1169?w=800&h=600&fit=crop', // studying
   ];
 
   useEffect(() => {
