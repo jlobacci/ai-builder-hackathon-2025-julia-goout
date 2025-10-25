@@ -21,10 +21,12 @@ import {
   Settings,
   LogOut,
   Menu,
-  X
+  X,
+  Bell
 } from 'lucide-react';
 import { ProfileCard } from './ProfileCard';
 import { UpcomingEvents } from './UpcomingEvents';
+import { NotificationsDropdown } from './NotificationsDropdown';
 import { Sheet, SheetContent, SheetTrigger } from './ui/sheet';
 
 interface LayoutProps {
@@ -115,16 +117,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               })}
             </nav>
 
-            {/* Profile Avatar - Aligned with right edge of main column (700px) */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild className="cursor-pointer">
-                <Avatar className="w-10 h-10 border-2 border-border hover:border-primary transition-colors">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {profile?.display_name?.[0] || user?.email?.[0].toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
+            {/* Notifications + Profile Avatar - Aligned with right edge of main column (700px) */}
+            <div className="flex items-center gap-2">
+              <NotificationsDropdown />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild className="cursor-pointer">
+                  <Avatar className="w-10 h-10 border-2 border-border hover:border-primary transition-colors">
+                    <AvatarImage src={profile?.avatar_url || undefined} />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {profile?.display_name?.[0] || user?.email?.[0].toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-card z-50">
                 {profile && (
                   <>
@@ -149,7 +154,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   Sair
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </div>
           </div>
 
           {/* Mobile Menu + Avatar */}
@@ -203,6 +209,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   })}
 
                   <div className="pt-4 border-t">
+                    <button
+                      onClick={() => {
+                        navigate('/notificacoes');
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent w-full"
+                    >
+                      <Bell className="w-5 h-5" />
+                      <span>Notificações</span>
+                    </button>
                     <button
                       onClick={() => {
                         navigate('/about');

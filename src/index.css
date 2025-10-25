@@ -107,4 +107,16 @@
   .badge-mode {
     @apply inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium bg-accent text-accent-foreground;
   }
+
+  /* Fade in animation */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
