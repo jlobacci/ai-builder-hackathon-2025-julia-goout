@@ -49,7 +49,7 @@ const PublicProfile: React.FC = () => {
 
     // Load ratings
     const { data: ratingsData } = await supabase
-      .from('v_profile_ratings')
+      .from('v_profile_ratings' as any)
       .select('*')
       .eq('user_id', profileData.user_id)
       .maybeSingle();
@@ -64,7 +64,7 @@ const PublicProfile: React.FC = () => {
 
     // Load reviews
     const { data: reviewsData } = await supabase
-      .from('reviews')
+      .from('reviews' as any)
       .select('*, reviewer:profiles!reviews_reviewer_id_fkey(display_name, avatar_url)')
       .eq('reviewee_id', profileData.user_id)
       .order('created_at', { ascending: false });
@@ -73,7 +73,7 @@ const PublicProfile: React.FC = () => {
     // Load my review if logged in
     if (user && user.id !== profileData.user_id) {
       const { data: myReviewData } = await supabase
-        .from('reviews')
+        .from('reviews' as any)
         .select('*')
         .eq('reviewee_id', profileData.user_id)
         .eq('reviewer_id', user.id)
@@ -81,15 +81,15 @@ const PublicProfile: React.FC = () => {
       
       if (myReviewData) {
         setMyReview(myReviewData);
-        setReviewStars(myReviewData.stars);
-        setReviewBody(myReviewData.body || '');
+        setReviewStars((myReviewData as any).stars);
+        setReviewBody((myReviewData as any).body || '');
       }
     }
 
     // Load connection status
     if (user && user.id !== profileData.user_id) {
       const { data: connData } = await supabase
-        .from('connections')
+        .from('connections' as any)
         .select('*')
         .or(`and(requester_id.eq.${user.id},target_id.eq.${profileData.user_id}),and(requester_id.eq.${profileData.user_id},target_id.eq.${user.id})`)
         .maybeSingle();
@@ -119,7 +119,7 @@ const PublicProfile: React.FC = () => {
 
     if (myReview) {
       const { error } = await supabase
-        .from('reviews')
+        .from('reviews' as any)
         .update(reviewData)
         .eq('id', myReview.id);
       
@@ -130,7 +130,7 @@ const PublicProfile: React.FC = () => {
       toast.success('Avaliação atualizada');
     } else {
       const { error } = await supabase
-        .from('reviews')
+        .from('reviews' as any)
         .insert(reviewData);
       
       if (error) {
@@ -147,7 +147,7 @@ const PublicProfile: React.FC = () => {
     if (!myReview) return;
 
     const { error } = await supabase
-      .from('reviews')
+      .from('reviews' as any)
       .delete()
       .eq('id', myReview.id);
     
@@ -167,7 +167,7 @@ const PublicProfile: React.FC = () => {
     if (!user || !profile) return;
 
     const { error } = await supabase
-      .from('connections')
+      .from('connections' as any)
       .insert({
         requester_id: user.id,
         target_id: profile.user_id,
@@ -187,7 +187,7 @@ const PublicProfile: React.FC = () => {
     if (!connection) return;
 
     const { error } = await supabase
-      .from('connections')
+      .from('connections' as any)
       .delete()
       .eq('id', connection.id);
     
@@ -204,7 +204,7 @@ const PublicProfile: React.FC = () => {
     if (!connection) return;
 
     const { error } = await supabase
-      .from('connections')
+      .from('connections' as any)
       .update({ status: 'aceita' })
       .eq('id', connection.id);
     
@@ -221,7 +221,7 @@ const PublicProfile: React.FC = () => {
     if (!connection) return;
 
     const { error } = await supabase
-      .from('connections')
+      .from('connections' as any)
       .update({ status: 'recusada' })
       .eq('id', connection.id);
     
