@@ -9,7 +9,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, MapPin, Star, MessageCircle, UserPlus, UserCheck, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CheckCircle, MapPin, Star, MessageCircle, UserPlus, UserCheck, X, Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -28,6 +31,18 @@ const PublicProfile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [reviewStars, setReviewStars] = useState(5);
   const [reviewBody, setReviewBody] = useState('');
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    display_name: '',
+    bio: '',
+    city: '',
+    state: '',
+    country: '',
+  });
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>('');
+  const [allHobbies, setAllHobbies] = useState<any[]>([]);
+  const [selectedHobbies, setSelectedHobbies] = useState<number[]>([]);
 
   useEffect(() => {
     loadProfile();
@@ -60,6 +75,16 @@ const PublicProfile: React.FC = () => {
     }
 
     setProfile(profileData);
+    
+    // Preencher formulário de edição
+    setEditForm({
+      display_name: profileData.display_name || '',
+      bio: profileData.bio || '',
+      city: profileData.city || '',
+      state: profileData.state || '',
+      country: profileData.country || '',
+    });
+    setAvatarPreview(profileData.avatar_url || '');
 
     // Load ratings
     const { data: ratingsData } = await supabase
@@ -75,6 +100,14 @@ const PublicProfile: React.FC = () => {
       .select('*, hobbies(*)')
       .eq('user_id', profileData.user_id);
     setHobbies(hobbiesData || []);
+    setSelectedHobbies((hobbiesData || []).map((h: any) => h.hobby_id));
+    
+    // Load all hobbies for selection
+    const { data: allHobbiesData } = await supabase
+      .from('hobbies')
+      .select('*')
+      .order('name');
+    setAllHobbies(allHobbiesData || []);
 
     // Load reviews
     const { data: reviewsData } = await supabase
@@ -248,6 +281,104 @@ const PublicProfile: React.FC = () => {
     loadProfile();
   };
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleToggleHobby = (hobbyId: number) => {
+    setSelectedHobbies(prev => 
+      prev.includes(hobbyId) 
+        ? prev.filter(id => id !== hobbyId)
+        : [...prev, hobbyId]
+    );
+  };
+
+  const handleSaveProfile = async () => {
+    if (!profile) return;
+
+    try {
+      let avatarUrl = profile.avatar_url;
+
+      // Upload avatar if changed
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${profile.user_id}-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('media-avatars')
+          .upload(fileName, avatarFile, { upsert: true });
+
+        if (uploadError) {
+          toast.error('Erro ao fazer upload da foto');
+          return;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('media-avatars')
+          .getPublicUrl(fileName);
+        
+        avatarUrl = publicUrl;
+      }
+
+      // Update profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          display_name: editForm.display_name,
+          bio: editForm.bio,
+          city: editForm.city,
+          state: editForm.state,
+          country: editForm.country,
+          avatar_url: avatarUrl,
+        })
+        .eq('user_id', profile.user_id);
+
+      if (profileError) {
+        toast.error('Erro ao atualizar perfil');
+        return;
+      }
+
+      // Update hobbies
+      // Delete current hobbies
+      await supabase
+        .from('user_hobbies')
+        .delete()
+        .eq('user_id', profile.user_id);
+
+      // Insert new hobbies
+      if (selectedHobbies.length > 0) {
+        const { error: hobbiesError } = await supabase
+          .from('user_hobbies')
+          .insert(
+            selectedHobbies.map(hobby_id => ({
+              user_id: profile.user_id,
+              hobby_id,
+            }))
+          );
+
+        if (hobbiesError) {
+          toast.error('Erro ao atualizar hobbies');
+          return;
+        }
+      }
+
+      toast.success('Perfil atualizado com sucesso');
+      setEditDialogOpen(false);
+      setAvatarFile(null);
+      loadProfile();
+    } catch (error) {
+      toast.error('Erro ao salvar perfil');
+    }
+  };
+
   const renderStars = (stars: number, count?: number) => {
     const fullStars = Math.floor(stars);
     const hasHalfStar = stars % 1 >= 0.5;
@@ -390,7 +521,7 @@ const PublicProfile: React.FC = () => {
                   )}
 
                   {isOwnProfile && (
-                    <Button onClick={() => navigate('/settings/profile')} variant="outline" size="sm" className="w-full">
+                    <Button onClick={() => setEditDialogOpen(true)} variant="outline" size="sm" className="w-full">
                       Editar perfil
                     </Button>
                   )}
@@ -576,6 +707,131 @@ const PublicProfile: React.FC = () => {
             </Tabs>
           </div>
         </div>
+
+        {/* Edit Profile Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Editar Perfil</DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-6">
+              {/* Avatar Upload */}
+              <div className="space-y-2">
+                <Label>Foto de Perfil</Label>
+                <div className="flex items-center gap-4">
+                  <Avatar className="w-24 h-24">
+                    <AvatarImage src={avatarPreview} />
+                    <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                      {editForm.display_name?.[0] || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <Input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => document.getElementById('avatar-upload')?.click()}
+                    >
+                      <Upload className="w-4 h-4 mr-2" />
+                      Escolher foto
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nome */}
+              <div className="space-y-2">
+                <Label htmlFor="display_name">Nome</Label>
+                <Input
+                  id="display_name"
+                  value={editForm.display_name}
+                  onChange={(e) => setEditForm({ ...editForm, display_name: e.target.value })}
+                  placeholder="Seu nome"
+                />
+              </div>
+
+              {/* Bio */}
+              <div className="space-y-2">
+                <Label htmlFor="bio">Descrição</Label>
+                <Textarea
+                  id="bio"
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                  placeholder="Conte um pouco sobre você..."
+                  rows={4}
+                />
+              </div>
+
+              {/* Localização */}
+              <div className="space-y-4">
+                <Label>Localização</Label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="city" className="text-sm text-muted-foreground">Cidade</Label>
+                    <Input
+                      id="city"
+                      value={editForm.city}
+                      onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
+                      placeholder="Cidade"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="state" className="text-sm text-muted-foreground">Estado</Label>
+                    <Input
+                      id="state"
+                      value={editForm.state}
+                      onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
+                      placeholder="Estado"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country" className="text-sm text-muted-foreground">País</Label>
+                    <Input
+                      id="country"
+                      value={editForm.country}
+                      onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
+                      placeholder="País"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Hobbies */}
+              <div className="space-y-2">
+                <Label>Hobbies</Label>
+                <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto border rounded-md p-4">
+                  {allHobbies.map((hobby) => (
+                    <Badge
+                      key={hobby.id}
+                      variant={selectedHobbies.includes(hobby.id) ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => handleToggleHobby(hobby.id)}
+                    >
+                      {hobby.name}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleSaveProfile}>
+                  Salvar
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
