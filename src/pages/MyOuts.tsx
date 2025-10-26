@@ -235,10 +235,15 @@ const MyOuts: React.FC = () => {
                                 {out.city}
                               </div>
                             )}
-                            {getNextSlot(out.invite_slots) && (
+                            {getNextSlot(out.invite_slots) ? (
                               <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                 <Calendar className="w-4 h-4" />
                                 {formatDate(getNextSlot(out.invite_slots).date)} às {getNextSlot(out.invite_slots).start_time.substring(0, 5)}
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                                <Calendar className="w-4 h-4" />
+                                Sem datas definidas
                               </div>
                             )}
                           </div>
@@ -336,10 +341,15 @@ const MyOuts: React.FC = () => {
                             {app.invite.city}
                           </div>
                         )}
-                        {getNextSlot(app.invite.invite_slots) && (
+                        {getNextSlot(app.invite.invite_slots) ? (
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Calendar className="w-4 h-4" />
                             {formatDate(getNextSlot(app.invite.invite_slots).date)} às {getNextSlot(app.invite.invite_slots).start_time.substring(0, 5)}
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Calendar className="w-4 h-4" />
+                            Sem datas definidas
                           </div>
                         )}
                       </div>

@@ -171,7 +171,13 @@ const EditOut: React.FC = () => {
       }
     }
 
-    // Validate time slots
+    // Validate time slots - at least one complete slot is required
+    const validSlots = timeSlots.filter(s => s.date && s.start_time && s.end_time);
+    if (validSlots.length === 0) {
+      toast.error('Adicione pelo menos uma data e horário para o Out.');
+      return;
+    }
+
     for (let i = 0; i < timeSlots.length; i++) {
       const slot = timeSlots[i];
       if (slot.date && slot.start_time && slot.end_time) {
