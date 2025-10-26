@@ -78,7 +78,7 @@ const Auth: React.FC = () => {
     });
 
     if (error) {
-      toast.error(error.message);
+      toast.error('E-mail ou senha incorretos.');
       setLoading(false);
       return;
     }
@@ -124,12 +124,7 @@ const Auth: React.FC = () => {
     });
 
     if (error) {
-      // Check if it's a "user already exists" error
-      if (error.message.includes('already') || error.message.includes('registered') || error.status === 422) {
-        toast.error('Este email já está cadastrado. Por favor, faça login ou use "Trocar de conta" para criar uma nova conta.');
-      } else {
-        toast.error(error.message);
-      }
+      toast.error('Não foi possível criar a conta. Verifique seus dados e tente novamente.');
       setLoading(false);
       return;
     }

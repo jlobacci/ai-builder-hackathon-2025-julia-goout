@@ -1120,6 +1120,23 @@ export type Database = {
       }
     }
     Functions: {
+      get_public_profile: {
+        Args: { target_user_id: string }
+        Returns: {
+          avatar_url: string
+          bio: string
+          city: string
+          country: string
+          created_at: string
+          display_name: string
+          handle: string
+          other_hobbies: string
+          radius_km: number
+          state: string
+          user_id: string
+          verified: boolean
+        }[]
+      }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       validate_cpf: { Args: { cpf_input: string }; Returns: boolean }
