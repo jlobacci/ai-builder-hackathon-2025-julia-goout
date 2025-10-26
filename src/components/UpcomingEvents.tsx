@@ -40,30 +40,20 @@ export const UpcomingEvents: React.FC = () => {
 
     const today = new Date().toISOString().split('T')[0];
 
-    // First get invites created by user
-    const { data: myInvites } = await supabase
-      .from('invites')
-      .select('id')
-      .eq('author_id', user.id);
-
-    const myInviteIds = myInvites?.map(i => i.id) || [];
-
     // Get slots for Outs created by user
-    let authorSlots: any[] = [];
-    if (myInviteIds.length > 0) {
-      const { data } = await supabase
-        .from('invite_slots')
-        .select(`
-          *,
-          invite:invites(id, title, city, mode, author_id)
-        `)
-        .gte('date', today)
-        .in('invite_id', myInviteIds);
+    const { data: authorSlots } = await supabase
+      .from('invite_slots')
+      .select(`
+        *,
+        invite:invites(id, title, city, mode, author_id)
+      `)
+      .gte('date', today)
+      .eq('invite.author_id', user.id)
+      .order('date', { ascending: true })
+      .order('start_time', { ascending: true })
+      .limit(3);
 
-      authorSlots = data || [];
-    }
-
-    // Get all applications from user (aceito, pendente, recusado)
+    // Get slots for Outs user applied to
     const { data: applications } = await supabase
       .from('applications')
       .select(`
@@ -71,7 +61,8 @@ export const UpcomingEvents: React.FC = () => {
         invite_id,
         invite:invites(id, title, city, mode, author_id)
       `)
-      .eq('applicant_id', user.id);
+      .eq('applicant_id', user.id)
+      .eq('status', 'aceito');
 
     const appliedInviteIds = applications?.map(a => a.invite_id) || [];
 
@@ -84,7 +75,10 @@ export const UpcomingEvents: React.FC = () => {
           invite:invites(id, title, city, mode, author_id)
         `)
         .gte('date', today)
-        .in('invite_id', appliedInviteIds);
+        .in('invite_id', appliedInviteIds)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(3);
 
       applicantSlots = data || [];
     }
@@ -105,15 +99,15 @@ export const UpcomingEvents: React.FC = () => {
       }) || [])
     ];
 
-    // Sort by date and time
+    // Sort by date and time, take top 3
     allSlots.sort((a, b) => {
       const dateCompare = a.date.localeCompare(b.date);
       if (dateCompare !== 0) return dateCompare;
       return a.start_time.localeCompare(b.start_time);
     });
 
-    // Filter out events with null invites (deleted invites) and take top 3
-    const validEvents = allSlots.filter(e => e.invite !== null && e.invite.title);
+    // Filter out events with null invites (deleted invites)
+    const validEvents = allSlots.filter(e => e.invite !== null);
     
     setEvents(validEvents.slice(0, 3));
     setLoading(false);
@@ -133,25 +127,24 @@ export const UpcomingEvents: React.FC = () => {
     return labels[mode as keyof typeof labels] || mode;
   };
 
+  if (loading) {
+    return null;
+  }
+
+  if (events.length === 0) {
+    return null;
+  }
+
   return (
     <Card className="sticky top-20">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          Próximos Outs
+          Próximos Eventos
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {loading ? (
-          <div className="text-sm text-muted-foreground text-center py-4">
-            Carregando...
-          </div>
-        ) : events.length === 0 ? (
-          <div className="text-sm text-muted-foreground text-center py-4">
-            Nenhum evento próximo
-          </div>
-        ) : (
-          events.map((event) => (
+        {events.map((event) => (
           <div
             key={event.id}
             onClick={() => navigate(`/out/${event.invite.id}`)}
@@ -162,21 +155,9 @@ export const UpcomingEvents: React.FC = () => {
                 {event.invite.title}
               </h4>
               {event.isAuthor ? (
-                <Badge variant="secondary" className="text-xs shrink-0 bg-[#B6463A] text-white hover:bg-[#B6463A]/90">
-                  Criado
-                </Badge>
-              ) : event.applicationStatus === 'aceito' ? (
-                <Badge className="text-xs shrink-0 bg-[#16A34A] text-white hover:bg-[#16A34A]/90">
-                  Aceito
-                </Badge>
-              ) : event.applicationStatus === 'pendente' ? (
-                <Badge variant="outline" className="text-xs shrink-0 border-[#D0D5DD] text-foreground">
-                  Pendente
-                </Badge>
+                <Badge variant="secondary" className="text-xs shrink-0">Criado</Badge>
               ) : (
-                <Badge variant="outline" className="text-xs shrink-0">
-                  {event.applicationStatus}
-                </Badge>
+                <Badge className="text-xs shrink-0 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90">Aceito</Badge>
               )}
             </div>
             
@@ -205,8 +186,7 @@ export const UpcomingEvents: React.FC = () => {
               )}
             </div>
           </div>
-          ))
-        )}
+        ))}
       </CardContent>
     </Card>
   );

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MapPin, Edit, MessageCircle, ChevronDown, ChevronUp, Calendar } from 'lucide-react';
+import { MapPin, Edit, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { OutMessagesBlock } from '@/components/OutMessagesBlock';
 import { CalendarView } from '@/components/CalendarView';
 
@@ -39,8 +39,7 @@ const MyOuts: React.FC = () => {
       .from('invites')
       .select(`
         *,
-        hobby:hobbies(name),
-        invite_slots(date, start_time, end_time)
+        hobby:hobbies(name)
       `)
       .eq('author_id', user.id)
       .order('created_at', { ascending: false });
@@ -55,8 +54,7 @@ const MyOuts: React.FC = () => {
           city,
           mode,
           author_id,
-          hobby:hobbies(name),
-          invite_slots(date, start_time, end_time)
+          hobby:hobbies(name)
         )
       `)
       .eq('applicant_id', user.id)
@@ -137,33 +135,6 @@ const MyOuts: React.FC = () => {
     return labels[status as keyof typeof labels] || status;
   };
 
-  const getNextSlot = (slots: any[]) => {
-    if (!slots || slots.length === 0) return null;
-    
-    const today = new Date().toISOString().split('T')[0];
-    
-    // Sort all slots by date and time
-    const sortedSlots = [...slots].sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date);
-      if (dateCompare !== 0) return dateCompare;
-      return a.start_time.localeCompare(b.start_time);
-    });
-    
-    // Try to find future slots first
-    const futureSlots = sortedSlots.filter(s => s.date >= today);
-    if (futureSlots.length > 0) {
-      return futureSlots[0];
-    }
-    
-    // If no future slots, return the most recent past slot
-    return sortedSlots[sortedSlots.length - 1];
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString + 'T00:00:00');
-    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' });
-  };
-
   return (
     <Layout>
       <div className="max-w-5xl mx-auto">
@@ -228,25 +199,12 @@ const MyOuts: React.FC = () => {
                             )}
                             <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
                           </div>
-                          <div className="space-y-1 mt-2">
-                            {out.city && (
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <MapPin className="w-4 h-4" />
-                                {out.city}
-                              </div>
-                            )}
-                            {getNextSlot(out.invite_slots) ? (
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Calendar className="w-4 h-4" />
-                                {formatDate(getNextSlot(out.invite_slots).date)} às {getNextSlot(out.invite_slots).start_time.substring(0, 5)}
-                              </div>
-                            ) : (
-                              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                <Calendar className="w-4 h-4" />
-                                Sem datas definidas
-                              </div>
-                            )}
-                          </div>
+                          {out.city && (
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground mt-2">
+                              <MapPin className="w-4 h-4" />
+                              {out.city}
+                            </div>
+                          )}
                         </div>
                         <Button
                           onClick={() => navigate(`/out/${out.id}/edit`)}
@@ -334,25 +292,12 @@ const MyOuts: React.FC = () => {
                           {getStatusLabel(app.status)}
                         </Badge>
                       </div>
-                      <div className="space-y-1">
-                        {app.invite.city && (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <MapPin className="w-4 h-4" />
-                            {app.invite.city}
-                          </div>
-                        )}
-                        {getNextSlot(app.invite.invite_slots) ? (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            {formatDate(getNextSlot(app.invite.invite_slots).date)} às {getNextSlot(app.invite.invite_slots).start_time.substring(0, 5)}
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Calendar className="w-4 h-4" />
-                            Sem datas definidas
-                          </div>
-                        )}
-                      </div>
+                      {app.invite.city && (
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <MapPin className="w-4 h-4" />
+                          {app.invite.city}
+                        </div>
+                      )}
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="flex gap-2">

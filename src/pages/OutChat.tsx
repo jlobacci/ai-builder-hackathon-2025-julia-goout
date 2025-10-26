@@ -47,7 +47,7 @@ const OutChat: React.FC = () => {
       .from('messages')
       .select(`
         *,
-        sender:v_public_profiles!messages_sender_id_fkey(display_name, avatar_url)
+        sender:profiles!messages_sender_id_fkey(display_name, avatar_url)
       `)
       .eq('invite_id', Number(id))
       .order('created_at', { ascending: true });
@@ -73,7 +73,7 @@ const OutChat: React.FC = () => {
             .from('messages')
             .select(`
               *,
-              sender:v_public_profiles!messages_sender_id_fkey(display_name, avatar_url)
+              sender:profiles!messages_sender_id_fkey(display_name, avatar_url)
             `)
             .eq('id', payload.new.id)
             .single();
@@ -144,15 +144,15 @@ const OutChat: React.FC = () => {
                       className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}
                     >
                       <Avatar className="w-8 h-8">
-                        <AvatarImage src={message.sender?.avatar_url || undefined} />
+                        <AvatarImage src={message.sender.avatar_url || undefined} />
                         <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                          {message.sender?.display_name?.[0] || 'U'}
+                          {message.sender.display_name?.[0] || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div className={`flex-1 ${isOwn ? 'text-right' : ''}`}>
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-sm font-medium">
-                            {message.sender?.display_name || 'Usuário'}
+                            {message.sender.display_name}
                           </span>
                           <span className="text-xs text-muted-foreground">
                             {formatTime(message.created_at)}
