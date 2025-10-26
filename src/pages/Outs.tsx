@@ -8,7 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
-import { MapPin } from 'lucide-react';
+import { MapPin, Calendar as CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const Outs: React.FC = () => {
   const navigate = useNavigate();
@@ -176,18 +178,20 @@ const Outs: React.FC = () => {
                         )}
                         <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
                       </div>
-                      {out.city && (
-                        <div className="flex items-center gap-1.5 text-sm text-[#6B6B6B]">
-                          <MapPin className="w-4 h-4" />
-                          {out.city}
-                          {nextSlots[out.id] && (
-                            <>
-                              <span className="mx-1">•</span>
-                              <span>{formatSlotDate(nextSlots[out.id])}</span>
-                            </>
-                          )}
-                        </div>
-                      )}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {out.city && (
+                          <Badge variant="secondary" className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {out.city}
+                          </Badge>
+                        )}
+                        {nextSlots[out.id] && (
+                          <Badge className="flex items-center gap-1">
+                            <CalendarIcon className="h-3 w-3" />
+                            {format(new Date(nextSlots[out.id].date + 'T00:00:00'), "EEE, d 'de' LLL", { locale: ptBR })}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <Avatar className="w-8 h-8">

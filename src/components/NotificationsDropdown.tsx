@@ -12,6 +12,7 @@ import {
 } from './ui/dropdown-menu';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { useToast } from '@/hooks/use-toast';
 
 interface Notification {
   id: string;
@@ -26,6 +27,7 @@ interface Notification {
 export const NotificationsDropdown: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
@@ -174,11 +176,14 @@ export const NotificationsDropdown: React.FC = () => {
     if (!user) return;
 
     try {
-      // Upsert last_seen_at
       const { error } = await supabase
         .from('user_notification_state')
         .upsert(
-          { user_id: user.id, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          { 
+            user_id: user.id, 
+            last_seen_at: new Date().toISOString(), 
+            updated_at: new Date().toISOString() 
+          },
           { onConflict: 'user_id' }
         );
 
@@ -188,8 +193,17 @@ export const NotificationsDropdown: React.FC = () => {
       setTimeout(() => {
         setUnreadCount(0);
       }, 300);
+      
+      toast({
+        title: "Notificações marcadas como lidas",
+      });
     } catch (error) {
       console.error('Error marking as read:', error);
+      toast({
+        title: "Erro ao marcar notificações",
+        description: "Tente novamente mais tarde",
+        variant: "destructive"
+      });
     }
   };
 

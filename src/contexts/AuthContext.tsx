@@ -40,16 +40,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Global sign out
     await supabase.auth.signOut({ scope: 'global' });
     
-    // Clear all storage
-    localStorage.clear();
-    sessionStorage.clear();
+    // Clear specific auth tokens
+    try {
+      localStorage.removeItem('supabase.auth.token');
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || '';
+      if (projectId) {
+        localStorage.removeItem(`sb-${projectId}-auth-token`);
+      }
+    } catch (error) {
+      console.error('Error clearing auth tokens:', error);
+    }
     
     // Clear states
     setUser(null);
     setSession(null);
     
-    // Redirect to landing with signedout flag
-    window.location.href = '/?signedout=1';
+    // Redirect to auth page with logged_out flag
+    window.location.replace('/auth?logged_out=1');
   };
 
   return (
