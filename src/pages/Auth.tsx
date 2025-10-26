@@ -31,9 +31,15 @@ const Auth: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  // Remove auto-redirect - always show form
+  // Check for existing session and warn user
   useEffect(() => {
-    // Only redirect after successful login, not on page load
+    const checkExistingSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        toast.info('Você já está logado. Para criar uma nova conta, clique em "Trocar de conta" primeiro.');
+      }
+    };
+    checkExistingSession();
   }, []);
 
   const checkProfileAndRedirect = async () => {
@@ -109,7 +115,7 @@ const Auth: React.FC = () => {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -118,9 +124,25 @@ const Auth: React.FC = () => {
     });
 
     if (error) {
-      toast.error(error.message);
+      // Check if it's a "user already exists" error
+      if (error.message.includes('already') || error.message.includes('registered') || error.status === 422) {
+        toast.error('Este email já está cadastrado. Por favor, faça login ou use "Trocar de conta" para criar uma nova conta.');
+      } else {
+        toast.error(error.message);
+      }
       setLoading(false);
       return;
+    }
+
+    // Check if user was created successfully
+    if (data.user) {
+      toast.success('Conta criada com sucesso! Redirecionando...');
+      // Redirect to onboarding after successful signup
+      setTimeout(() => {
+        navigate('/onboarding');
+      }, 1000);
+    } else {
+      toast.error('Erro ao criar conta. Tente novamente.');
     }
 
     setLoading(false);
@@ -139,9 +161,20 @@ const Auth: React.FC = () => {
                 variant="ghost"
                 onClick={async () => {
                   await supabase.auth.signOut({ scope: 'global' });
+                  try {
+                    localStorage.removeItem('supabase.auth.token');
+                    const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || '';
+                    if (projectId) {
+                      localStorage.removeItem(`sb-${projectId}-auth-token`);
+                    }
+                  } catch (error) {
+                    console.error('Error clearing tokens:', error);
+                  }
                   localStorage.clear();
                   sessionStorage.clear();
                   toast.success('Sessão encerrada. Você pode fazer login com outra conta.');
+                  // Reload the page to clear all state
+                  window.location.reload();
                 }}
                 className="text-[#6F6F6F] hover:text-[#B6463A]"
               >
