@@ -15,34 +15,13 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Shield, CheckCircle2, Upload, Loader2, X, Plus } from "lucide-react";
 import { z } from "zod";
 
-// CPF validation helper
-const validateCPFChecksum = (cpf: string): boolean => {
+// CPF validation helper - accepts any 11 digits
+const validateCPFFormat = (cpf: string): boolean => {
   if (!cpf) return true; // Optional field
   const numbers = cpf.replace(/\D/g, '');
   
-  if (numbers.length !== 11) return false;
-  
-  // Check for known invalid patterns
-  if (/^(\d)\1{10}$/.test(numbers)) return false;
-  
-  // Calculate first check digit
-  let sum = 0;
-  for (let i = 0; i < 9; i++) {
-    sum += parseInt(numbers[i]) * (10 - i);
-  }
-  let digit1 = 11 - (sum % 11);
-  if (digit1 >= 10) digit1 = 0;
-  
-  // Calculate second check digit
-  sum = 0;
-  for (let i = 0; i < 10; i++) {
-    sum += parseInt(numbers[i]) * (11 - i);
-  }
-  let digit2 = 11 - (sum % 11);
-  if (digit2 >= 10) digit2 = 0;
-  
-  // Verify
-  return parseInt(numbers[9]) === digit1 && parseInt(numbers[10]) === digit2;
+  // Just check if it has exactly 11 digits
+  return numbers.length === 11;
 };
 
 const onboardingSchema = z.object({
@@ -60,7 +39,7 @@ const onboardingSchema = z.object({
   bio: z.string().max(500, "Bio deve ter no máximo 500 caracteres").optional(),
   cpf: z.string()
     .regex(/^\d{3}\.\d{3}\.\d{3}-\d{2}$/, "CPF deve estar no formato XXX.XXX.XXX-XX")
-    .refine(validateCPFChecksum, "CPF inválido")
+    .refine(validateCPFFormat, "CPF deve ter 11 dígitos")
     .optional(),
 });
 
