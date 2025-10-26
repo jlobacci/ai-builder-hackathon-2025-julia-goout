@@ -40,18 +40,31 @@ export const UpcomingEvents: React.FC = () => {
 
     const today = new Date().toISOString().split('T')[0];
 
+    // First get invites created by user
+    const { data: myInvites } = await supabase
+      .from('invites')
+      .select('id')
+      .eq('author_id', user.id);
+
+    const myInviteIds = myInvites?.map(i => i.id) || [];
+
     // Get slots for Outs created by user
-    const { data: authorSlots } = await supabase
-      .from('invite_slots')
-      .select(`
-        *,
-        invite:invites(id, title, city, mode, author_id)
-      `)
-      .gte('date', today)
-      .eq('invite.author_id', user.id)
-      .order('date', { ascending: true })
-      .order('start_time', { ascending: true })
-      .limit(3);
+    let authorSlots: any[] = [];
+    if (myInviteIds.length > 0) {
+      const { data } = await supabase
+        .from('invite_slots')
+        .select(`
+          *,
+          invite:invites(id, title, city, mode, author_id)
+        `)
+        .gte('date', today)
+        .in('invite_id', myInviteIds)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(3);
+
+      authorSlots = data || [];
+    }
 
     // Get slots for Outs user applied to
     const { data: applications } = await supabase
@@ -85,10 +98,10 @@ export const UpcomingEvents: React.FC = () => {
 
     // Combine and mark slots
     const allSlots: UpcomingEvent[] = [
-      ...(authorSlots?.map(s => ({
+      ...(authorSlots.map(s => ({
         ...s,
         isAuthor: true
-      })) || []),
+      }))),
       ...(applicantSlots.map(s => {
         const app = applications?.find(a => a.invite_id === s.invite_id);
         return {
@@ -96,7 +109,7 @@ export const UpcomingEvents: React.FC = () => {
           isAuthor: false,
           applicationStatus: app?.status
         };
-      }) || [])
+      }))
     ];
 
     // Sort by date and time, take top 3
