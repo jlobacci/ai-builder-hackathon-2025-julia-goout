@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ImageCropper } from '@/components/ImageCropper';
+import { PostCard, type Post } from '@/components/PostCard';
 
 const PublicProfile: React.FC = () => {
   const { handle } = useParams();
@@ -44,6 +45,7 @@ const PublicProfile: React.FC = () => {
   const [selectedHobbies, setSelectedHobbies] = useState<number[]>([]);
   const [connections, setConnections] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
 
   useEffect(() => {
     loadProfile();
@@ -152,6 +154,44 @@ const PublicProfile: React.FC = () => {
       .eq('author_id', profileData.user_id)
       .order('created_at', { ascending: false });
     setOuts(outsData || []);
+
+    // Load posts
+    const { data: postsData } = await supabase
+      .from('posts' as any)
+      .select(`
+        *,
+        profiles!posts_author_id_fkey(user_id, display_name, handle, avatar_url),
+        post_images(id, url),
+        post_mentions(id, mentioned_user_id, profiles!post_mentions_mentioned_user_id_fkey(user_id, display_name, handle))
+      `)
+      .eq('author_id', profileData.user_id)
+      .order('created_at', { ascending: false });
+
+    if (postsData) {
+      const enrichedPosts = await Promise.all(
+        postsData.map(async (post: any) => {
+          const { data: counts } = await supabase
+            .from('v_posts_counts' as any)
+            .select('*')
+            .eq('post_id', post.id)
+            .single();
+
+          const { data: likeData } = await supabase
+            .from('post_likes' as any)
+            .select('*')
+            .eq('post_id', post.id)
+            .eq('user_id', user?.id || '')
+            .maybeSingle();
+
+          return {
+            ...post,
+            v_posts_counts: counts ? [counts] : [{ likes_count: 0, comments_count: 0 }],
+            user_liked: !!likeData,
+          } as Post;
+        })
+      );
+      setPosts(enrichedPosts);
+    }
 
     // Load connections (only accepted ones)
     const { data: connectionsData } = await supabase
@@ -414,6 +454,35 @@ const PublicProfile: React.FC = () => {
     }
   };
 
+  const handleLike = async (postId: number, currentlyLiked: boolean) => {
+    if (!user) {
+      toast.error('Você precisa estar logado');
+      return;
+    }
+
+    try {
+      if (currentlyLiked) {
+        await supabase
+          .from('post_likes' as any)
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_id', user.id);
+      } else {
+        await supabase
+          .from('post_likes' as any)
+          .insert({ post_id: postId, user_id: user.id });
+      }
+      loadProfile(); // Reload to update counts
+    } catch (error) {
+      toast.error('Erro ao curtir');
+    }
+  };
+
+  const handleCommentClick = (postId: number) => {
+    // Navigate to feed or implement comment panel
+    toast.info('Para comentar, visite o feed');
+  };
+
   if (loading) {
     return (
       <Layout>
@@ -561,9 +630,10 @@ const PublicProfile: React.FC = () => {
           {/* Right content */}
           <div>
             <Tabs defaultValue="sobre" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="sobre">Sobre</TabsTrigger>
-                <TabsTrigger value="outs">Outs Organizados</TabsTrigger>
+                <TabsTrigger value="posts">Posts</TabsTrigger>
+                <TabsTrigger value="outs">Outs</TabsTrigger>
                 <TabsTrigger value="conexoes">Conexões</TabsTrigger>
               </TabsList>
 
@@ -593,6 +663,30 @@ const PublicProfile: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
+              </TabsContent>
+
+              <TabsContent value="posts" className="space-y-4">
+                {posts.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-8">
+                      <p className="text-center text-muted-foreground italic">
+                        Nenhum post ainda.
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="space-y-4">
+                    {posts.map((post) => (
+                      <PostCard
+                        key={post.id}
+                        post={post}
+                        currentUserId={user?.id}
+                        onLike={handleLike}
+                        onComment={handleCommentClick}
+                      />
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               <TabsContent value="outs" className="space-y-4">
