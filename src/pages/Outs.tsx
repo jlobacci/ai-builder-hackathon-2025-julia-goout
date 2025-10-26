@@ -19,6 +19,7 @@ const Outs: React.FC = () => {
   const [searchText, setSearchText] = useState('');
   const [selectedHobby, setSelectedHobby] = useState<string>('all');
   const [selectedMode, setSelectedMode] = useState<string>('all');
+  const [selectedPayment, setSelectedPayment] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [nextSlots, setNextSlots] = useState<Record<number, any>>({});
 
@@ -105,8 +106,9 @@ const Outs: React.FC = () => {
     
     const matchesHobby = selectedHobby === 'all' || out.hobby_id === selectedHobby;
     const matchesMode = selectedMode === 'all' || out.mode === selectedMode;
+    const matchesPayment = selectedPayment === 'all' || out.payment_type === selectedPayment;
 
-    return matchesText && matchesHobby && matchesMode;
+    return matchesText && matchesHobby && matchesMode && matchesPayment;
   });
 
   const getModeLabel = (mode: string) => {
@@ -156,6 +158,17 @@ const Outs: React.FC = () => {
               <SelectItem value="hibrido">Híbrido</SelectItem>
             </SelectContent>
           </Select>
+
+          <Select value={selectedPayment} onValueChange={setSelectedPayment}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Pagamento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="gratuito">Gratuito</SelectItem>
+              <SelectItem value="pago">Pago</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {loading ? (
@@ -177,6 +190,13 @@ const Outs: React.FC = () => {
                           </Badge>
                         )}
                         <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
+                        {out.payment_type === 'pago' ? (
+                          <Badge variant="default">
+                            R$ {out.price?.toFixed(2).replace('.', ',')}
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline">Gratuito</Badge>
+                        )}
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         {out.city && (

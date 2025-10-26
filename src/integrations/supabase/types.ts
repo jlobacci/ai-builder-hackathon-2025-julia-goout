@@ -311,6 +311,8 @@ export type Database = {
           lng: number | null
           materials: string | null
           mode: string | null
+          payment_type: string
+          price: number | null
           radius_km: number | null
           slots: number | null
           slots_taken: number | null
@@ -332,6 +334,8 @@ export type Database = {
           lng?: number | null
           materials?: string | null
           mode?: string | null
+          payment_type?: string
+          price?: number | null
           radius_km?: number | null
           slots?: number | null
           slots_taken?: number | null
@@ -353,6 +357,8 @@ export type Database = {
           lng?: number | null
           materials?: string | null
           mode?: string | null
+          payment_type?: string
+          price?: number | null
           radius_km?: number | null
           slots?: number | null
           slots_taken?: number | null

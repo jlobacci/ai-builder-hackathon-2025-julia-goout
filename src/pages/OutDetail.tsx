@@ -137,6 +137,13 @@ const OutDetail: React.FC = () => {
                     </Badge>
                   )}
                   <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
+                  {out.payment_type === 'pago' ? (
+                    <Badge variant="default" className="text-base px-3 py-1">
+                      R$ {out.price?.toFixed(2).replace('.', ',')}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-base px-3 py-1">Gratuito</Badge>
+                  )}
                 </div>
               </div>
               <div

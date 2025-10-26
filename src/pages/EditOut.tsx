@@ -37,9 +37,14 @@ const editOutSchema = z.object({
   city: z.string().optional(),
   slots: z.number().min(1).max(5),
   mode: z.enum(['presencial', 'online', 'hibrido']),
+  payment_type: z.enum(['gratuito', 'pago']),
+  price: z.number().min(0).optional().nullable(),
 }).refine(
   (data) => data.hobby_id !== null || (data.custom_hobby && data.custom_hobby.trim().length > 0),
   { message: 'Selecione um hobby da lista ou digite um hobby customizado', path: ['hobby_id'] }
+).refine(
+  (data) => data.payment_type !== 'pago' || (data.price !== null && data.price !== undefined && data.price > 0),
+  { message: 'Digite um valor maior que zero para Out pago', path: ['price'] }
 );
 
 type TimeSlot = {
@@ -70,6 +75,8 @@ const EditOut: React.FC = () => {
     materials: '',
     mode: 'presencial' as 'presencial' | 'online' | 'hibrido',
     time_is_fixed: true,
+    payment_type: 'gratuito' as 'gratuito' | 'pago',
+    price: null as number | null,
   });
 
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([
@@ -131,6 +138,8 @@ const EditOut: React.FC = () => {
         materials: invite.materials || '',
         mode: (invite.mode || 'presencial') as 'presencial' | 'online' | 'hibrido',
         time_is_fixed: invite.time_is_fixed ?? true,
+        payment_type: (invite.payment_type || 'gratuito') as 'gratuito' | 'pago',
+        price: invite.price || null,
       });
 
       // Set time slots
@@ -244,6 +253,8 @@ const EditOut: React.FC = () => {
           bring_own_materials: formData.bring_own_materials,
           materials: formData.bring_own_materials ? formData.materials : null,
           mode: formData.mode,
+          payment_type: formData.payment_type,
+          price: formData.payment_type === 'pago' ? formData.price : null,
         })
         .eq('id', Number(id));
 
@@ -404,6 +415,47 @@ const EditOut: React.FC = () => {
               />
             </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Grupo: Pagamento */}
+          <Card className="bg-white shadow-sm">
+            <CardContent className="pt-6 space-y-4">
+              <div>
+                <Label>Tipo de Out *</Label>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    type="button"
+                    variant={formData.payment_type === 'gratuito' ? 'default' : 'outline'}
+                    onClick={() => setFormData({ ...formData, payment_type: 'gratuito', price: null })}
+                  >
+                    Gratuito
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={formData.payment_type === 'pago' ? 'default' : 'outline'}
+                    onClick={() => setFormData({ ...formData, payment_type: 'pago' })}
+                  >
+                    Pago
+                  </Button>
+                </div>
+              </div>
+
+              {formData.payment_type === 'pago' && (
+                <div>
+                  <Label htmlFor="price">Valor (R$) *</Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={formData.price || ''}
+                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || null })}
+                    placeholder="0,00"
+                    required
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
 
