@@ -13,8 +13,19 @@ import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { toast } from 'sonner';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, CalendarIcon, Plus, X, ArrowLeft } from 'lucide-react';
+import { AlertCircle, CalendarIcon, Plus, X, ArrowLeft, Trash2 } from 'lucide-react';
 import { z } from 'zod';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { format, parse } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -46,6 +57,7 @@ const EditOut: React.FC = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [hobbies, setHobbies] = useState<any[]>([]);
   const [isAuthor, setIsAuthor] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -154,6 +166,29 @@ const EditOut: React.FC = () => {
     const updated = [...timeSlots];
     updated[index] = { ...updated[index], [field]: value };
     setTimeSlots(updated);
+  };
+
+  const handleDelete = async () => {
+    if (!id) return;
+
+    setLoading(true);
+    try {
+      // Delete the invite (cascades will handle slots, applications, etc.)
+      const { error } = await supabase
+        .from('invites')
+        .delete()
+        .eq('id', Number(id));
+
+      if (error) throw error;
+
+      toast.success('Out deletado com sucesso!');
+      navigate('/my-outs');
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao deletar Out');
+    } finally {
+      setLoading(false);
+      setShowDeleteDialog(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -279,9 +314,10 @@ const EditOut: React.FC = () => {
           <h1 className="text-3xl font-bold">Editar Out</h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Grupo 1: Título / Hobby / Modo */}
-          <div className="space-y-4">
+          <Card className="bg-white shadow-sm">
+            <CardContent className="pt-6 space-y-4">
             <div>
               <Label htmlFor="title">Título *</Label>
               <Input
@@ -339,10 +375,13 @@ const EditOut: React.FC = () => {
                 ))}
               </div>
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Grupo 2: Cidade / Vagas */}
-          <div className="grid grid-cols-2 gap-4">
+          <Card className="bg-white shadow-sm">
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="city">Cidade</Label>
               <Input
@@ -364,10 +403,13 @@ const EditOut: React.FC = () => {
                 required
               />
             </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Grupo 3: Materiais */}
-          <div className="space-y-4">
+          <Card className="bg-white shadow-sm">
+            <CardContent className="pt-6 space-y-4">
             <div className="flex items-center space-x-2">
               <Switch
                 id="materials"
@@ -389,10 +431,12 @@ const EditOut: React.FC = () => {
                 />
               </div>
             )}
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Grupo 4: Horário */}
-          <div className="space-y-4">
+          <Card className="bg-white shadow-sm">
+            <CardContent className="pt-6 space-y-4">
             <div>
               <Label>Horário fixo ou aberto?</Label>
               <div className="flex gap-2 mt-2">
@@ -498,10 +542,12 @@ const EditOut: React.FC = () => {
                 </div>
               ))}
             </div>
-          </div>
+            </CardContent>
+          </Card>
 
           {/* Grupo 5: Descrição */}
-          <div>
+          <Card className="bg-white shadow-sm">
+            <CardContent className="pt-6">
             <Label htmlFor="description">Descrição</Label>
             <Textarea
               id="description"
@@ -510,22 +556,62 @@ const EditOut: React.FC = () => {
               rows={4}
               placeholder="Descreva mais sobre este Out..."
             />
-          </div>
+            </CardContent>
+          </Card>
 
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => navigate(`/out/${id}`)}
-              className="flex-1"
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" className="flex-1" disabled={loading}>
-              {loading ? 'Salvando...' : 'Salvar alterações'}
-            </Button>
-          </div>
+          {/* Botões de Ação */}
+          <Card className="bg-white shadow-sm">
+            <CardContent className="pt-6">
+              <div className="flex flex-col gap-3">
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => navigate(`/out/${id}`)}
+                    className="flex-1"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button type="submit" className="flex-1" disabled={loading}>
+                    {loading ? 'Salvando...' : 'Salvar alterações'}
+                  </Button>
+                </div>
+                
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => setShowDeleteDialog(true)}
+                  disabled={loading}
+                  className="w-full"
+                >
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Deletar Out
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </form>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Deletar Out?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação não pode ser desfeita. O Out, suas datas/horários e todas as candidaturas serão removidos permanentemente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Deletar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Layout>
   );

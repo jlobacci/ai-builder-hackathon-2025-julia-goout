@@ -23,7 +23,8 @@ import {
   Menu,
   X,
   Bell,
-  Search
+  Search,
+  Compass
 } from 'lucide-react';
 import { ProfileCard } from './ProfileCard';
 import { UpcomingEvents } from './UpcomingEvents';
@@ -69,6 +70,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems = [
     { path: '/feed', icon: Home, label: 'Feed' },
+    { path: '/outs', icon: Compass, label: 'Descobrir' },
     { path: '/search', icon: Search, label: 'Buscar' },
     { path: '/my-outs', icon: Calendar, label: 'Meus Outs' },
     { path: '/out/new', icon: PlusCircle, label: 'Criar Out' },
@@ -278,7 +280,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               {/* Left Sidebar - Profile Card + Upcoming Events (Desktop only) */}
               <aside className="hidden lg:block space-y-4">
                 <ProfileCard />
-                <UpcomingEvents />
+                <div className="sticky top-20">
+                  <UpcomingEvents />
+                </div>
               </aside>
 
               {/* Main Content - Max width ~700px for optimal readability */}
