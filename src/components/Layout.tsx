@@ -89,18 +89,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Fixed Top Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border shadow-sm">
         <div className="max-w-[1200px] mx-auto px-6 h-full grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-center">
-          {/* Logo - Aligned with left sidebar */}
+          {/* Logo */}
           <button 
             onClick={() => navigate('/feed')}
             className="flex items-center gap-2 hover:opacity-80 transition-opacity lg:justify-start justify-center"
           >
-            <Logo size="md" />
+            <Logo size="lg" />
           </button>
 
           {/* Right side - Navigation + Profile */}
-          <div className="hidden lg:flex items-center max-w-[700px] w-full">
-            {/* Desktop Navigation - Centered in main column */}
-            <nav className="flex items-center gap-1 flex-1 justify-center">
+          <div className="hidden lg:flex items-center max-w-[700px] w-full justify-between">
+            {/* Desktop Navigation */}
+            <nav className="flex items-center gap-1">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
@@ -122,7 +122,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               })}
             </nav>
 
-            {/* Notifications + Profile Avatar - Aligned with right edge of main column (700px) */}
+            {/* Notifications + Profile Avatar */}
             <div className="flex items-center gap-2">
               <NotificationsDropdown />
               
