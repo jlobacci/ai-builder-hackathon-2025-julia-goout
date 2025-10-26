@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -149,8 +148,7 @@ const Auth: React.FC = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Logo size="md" />
+          <div className="flex h-16 items-center justify-end">
             <div className="flex gap-2">
               <Button
                 variant="ghost"
@@ -190,10 +188,7 @@ const Auth: React.FC = () => {
       <div className="flex items-center justify-center px-4 py-12">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center flex flex-col items-center">
-            <div className="mb-6">
-              <img src="/src/assets/logo.png" alt="goOut" className="h-20 w-auto mx-auto" />
-            </div>
-            <h2 className="mt-6 text-3xl font-bold text-[#333333]">Let's go OUT!</h2>
+            <h2 className="text-3xl font-bold text-[#333333]">Let's go OUT!</h2>
             <p className="mt-2 text-[#6F6F6F]">
               Encontre amigos para fazer aquilo que move a vida
             </p>
