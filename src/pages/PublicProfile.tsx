@@ -630,10 +630,9 @@ const PublicProfile: React.FC = () => {
           {/* Right content */}
           <div>
             <Tabs defaultValue="sobre" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="sobre">Sobre</TabsTrigger>
-                <TabsTrigger value="posts">Posts</TabsTrigger>
-                <TabsTrigger value="outs">Outs</TabsTrigger>
+                <TabsTrigger value="outs">Outs Organizados</TabsTrigger>
                 <TabsTrigger value="conexoes">Conexões</TabsTrigger>
               </TabsList>
 
@@ -663,30 +662,32 @@ const PublicProfile: React.FC = () => {
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
 
-              <TabsContent value="posts" className="space-y-4">
-                {posts.length === 0 ? (
-                  <Card>
-                    <CardContent className="py-8">
-                      <p className="text-center text-muted-foreground italic">
+                {/* Posts section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Posts</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {posts.length === 0 ? (
+                      <p className="text-center text-muted-foreground italic py-4">
                         Nenhum post ainda.
                       </p>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <div className="space-y-4">
-                    {posts.map((post) => (
-                      <PostCard
-                        key={post.id}
-                        post={post}
-                        currentUserId={user?.id}
-                        onLike={handleLike}
-                        onComment={handleCommentClick}
-                      />
-                    ))}
-                  </div>
-                )}
+                    ) : (
+                      <div className="space-y-4">
+                        {posts.map((post) => (
+                          <PostCard
+                            key={post.id}
+                            post={post}
+                            currentUserId={user?.id}
+                            onLike={handleLike}
+                            onComment={handleCommentClick}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <TabsContent value="outs" className="space-y-4">
