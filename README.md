@@ -1,23 +1,74 @@
-# goOut - LinkedIn para Hobbies
+<h1 align="center">Hi 👋, I'm Julia</h1>
+<h3 align="center">A marketing specialist passionate by AI and creating</h3>
+<p>
+</p>
+- 🔭 I’m currently working on **Marketing AI Ops**
 
-> Encontre amigos para fazer aquilo que move a vida. Conecte-se com pessoas para praticar hobbies.
+- 🌱 I’m currently learning **n8n**
 
-## 📋 Stack Tecnológica
+- 👯 I’m looking to collaborate on **implamenting strategic AI in companies**
 
-- **Frontend**: React 18 + TypeScript
-- **Build Tool**: Vite 5
-- **Styling**: Tailwind CSS + shadcn/ui
-- **Backend**: Supabase (Auth, Database, Storage)
-- **Routing**: React Router DOM
-- **Forms**: React Hook Form + Zod
-- **State Management**: TanStack Query
+- 🤝 I’m looking for help with **Upskilling in AI and Coding**
 
-## 🚀 Quick Start
+- 💬 Ask me about **automations, strategic AI, AI implementation**
 
-### Pré-requisitos
+- 📫 How to reach me **jlobacci@gmail.com**
 
-- Node.js 20.x LTS (recomendado usar [nvm](https://github.com/nvm-sh/nvm))
-- npm ou yarn
+- ⚡ Fun fact: **I graduated in Architecture, worked as a Designer, specialized in marketing and I'm currinting shiffiting to facilitade AI implementations for companies**
+
+<h3 align="left">Connect with me:</h3>
+<p align="left">
+<a href="https://linkedin.com/in/https://www.linkedin.com/in/julia-bacci/" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="https://www.linkedin.com/in/julia-bacci/" height="30" width="40" /></a>
+</p>
+
+---
+
+![Preview do GoOut](https://goout.lovable.app/assets/logo-BGlrBnz4.png)
+<h3 align="center">Mais do que uma rede social!</h3>
+
+<h3 align="center">Um movimento para quem quer viver mais, aprender mais e se conectar de verdade.</h3>
+<h4 align="center">Transforme a busca por experiências em momentos inesquecíveis — de festivais a teatros, tudo com IA ao seu lado.</h3>
+
+[![Built with Lovable](https://img.shields.io/badge/Built%20with-Lovable-blueviolet?style=for-the-badge)](https://lovable.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-97.6%25-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-Framework-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
+
+**demo**: [https://drive.google.com/file/d/17xGr5_3prxWuW-Om5WmXejU3jcBySIHT/view?usp=sharing)  
+**Apresentação**: [https://docs.google.com/presentation/d/1nRk3pvYGghxLWD0sFHE5tBhjKcVgF5ca3H9dbUQOL0s/edit?usp=sharing)
+
+
+---
+
+## por que existe
+
+O **GoOut** nasceu para te tirar da rotina, te conectar com pessoas e te inspirar a ocupar a cidade com propósito. Uma rede social feita para se conectar com novas pessoas e ocupar a cidade despertando convívio e criatividade.
+
+---
+
+## principais recursos
+
+### 🎭 **Anúncio de eventos publicamente**  
+Anuncie atividades que gostaria de fazer, encontre pessoas que estão buscando o mesmo, marquem um dia e ocupem os espaços.
+
+### 🎫 **verificações de segurança**  
+Verificação de antecedentes por CPF e checagem de foto com IA, garantindo conexões seguras, experiências reais.
+
+### 📍 **Espaço para pequenos empreendedores**  
+Divulgue aulas e atividades em grupos, encontre pessoas buscando por nichos e crie eventos que conectam e geram valor.
+
+### 💾 **Conheça pessoas reais**  
+Encontre e se conecte com pessoas que, como você, estão buscando amizades reais.
+
+### 🌐 **multi-região**  
+Suporte inicial para Brasil, com expansão planejada para América Latina e Europa. interface adaptável e dados localizados.
+
+### ⚡ **Stack moderna e escalável**  
+React + TypeScript + Vite no front; Supabase (auth/db/storage) + integração com APIs de eventos e gateways de pagamento no back.
+
+---
+
+## começar em 5 minutos
 
 ### Instalação
 
@@ -67,6 +118,33 @@ npm run format           # Formata código com Prettier (adicionar ao package.js
 npm run preview          # Preview do build de produção
 ```
 
+---
+
+## como usar
+
+1. **cadastro/login**  
+   crie sua conta ou autentique-se via Email. configure suas preferências culturais iniciais (músicas, gêneros, cidades).
+
+2. **explorar eventos**  
+   navegue pela homepage, use a busca ou filtros para descobrir eventos específicos.
+
+3. **Publique eventos**  
+   Anuncie o que gosta de fazer e encontre pessoas para somar nas atividades
+
+4. **Envie mensagens**  
+   Marque pessoas, comente em publicações, faça perguntas e receba notificações automáticas.
+
+```js
+const res = await fetch('https://api.juliagoout.com/events/recommend', {
+  method: 'POST',
+  headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+  body: JSON.stringify({ user_id: '123', location: 'São Paulo', preferences: ['música', 'teatro'] })
+});
+const recommendations = await res.json();
+```
+
+---
+
 ## 📁 Estrutura do Projeto
 
 ```
@@ -95,84 +173,94 @@ supabase/
 - **CSP**: Content Security Policy configurada no `index.html`
 - **Validação**: Schemas Zod para validação de entrada
 
-## 🎨 Design System
+---
 
-O projeto utiliza um design system customizado baseado em:
-- **Paleta**: Burnt Red (#B6463A) como cor primária sobre fundo branco limpo
-- **Tipografia**: Red Hat Display
-- **Componentes**: shadcn/ui com customizações
-- **Tokens**: Todas as cores definidas como HSL no `index.css`
+## 📋 Stack Tecnológica
 
-Ver `src/index.css` e `tailwind.config.ts` para configurações detalhadas.
+- **Frontend**: React 18 + TypeScript
+- **Build Tool**: Vite 5
+- **Styling**: Tailwind CSS + shadcn/ui
+- **Backend**: Supabase (Auth, Database, Storage)
+- **Routing**: React Router DOM
+- **Forms**: React Hook Form + Zod
+- **State Management**: TanStack Query
 
-## 📊 Checklist de Avaliação
+---
 
-### ✅ Clean Code
-- [x] TypeScript strict mode habilitado
-- [x] ESLint configurado com regras rigorosas
-- [x] Prettier para formatação consistente
-- [x] Imports organizados e sem código morto
-- [x] Nomes de variáveis/funções descritivos
-- [x] Componentes focados e reutilizáveis
-- [x] Types compartilhados em `src/types/`
+## roadmap
 
-### ✅ Segurança
-- [x] `.env` no .gitignore, apenas `.env.example` commitado
-- [x] CSP configurado no index.html
-- [x] Sem uso de `dangerouslySetInnerHTML` exceto em casos controlados
-- [x] Validação de entrada com Zod
-- [x] RLS habilitado em todas as tabelas Supabase
+### **fase 1 — MVP (✅ concluído)**
 
-### ✅ Performance
-- [x] Code splitting por rotas (React Router)
-- [x] Imports direcionados (ex: `date-fns/format`)
-- [x] Lazy loading de componentes pesados
-- [x] Otimização de imagens via Supabase Storage
+* autenticação e perfil de usuário
+* busca básica e filtros
+* UI moderna com glassmorphism
+* checagem de dados e segurança
+* suporte a múltiplas cidades e regiões
 
-### ✅ Apresentação
-- [x] README completo e estruturado
-- [x] CHANGELOG documentando mudanças
-- [x] CI/CD básico configurado
-- [x] .editorconfig para consistência
-- [x] Documentação de setup clara
+### **fase 2 — em desenvolvimento**
 
-## 🔧 Métricas de Build
+* sistema de IA avançado com recomendações personalizadas
+* notificações push e emails personalizados
+* Checkout para eventos pagos
+* Integração via API com Google Calendar
 
-Após o último build (exemplo):
-```
-Build completed
-dist/ size: ~X MB
-Total files: ~XX
-Warnings: 0
-```
+### **fase 3 — futuro**
 
-## 🤝 Contribuindo
+* app mobile nativo (React Native)
+* integração com redes sociais para eventos colaborativos
+* marketplace de experiências (workshops, encontros)
+* expansão internacional (América Latina, Europa)
 
-1. Clone o projeto
-2. Crie uma branch (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+---
 
-### Padrões de Código
+## diferenciais competitivos
 
-- Use TypeScript para todos os novos arquivos
-- Siga as regras do ESLint
-- Execute `npm run format` antes de commitar
-- Mantenha componentes pequenos e focados
-- Adicione types apropriados (evite `any`)
+**vs. Outros apps**: foco em mercado brasileiro, gratuito e com foco específico em conectar pessoas para realizar hobbies
 
-## 📝 Licença
+**vs. agregadores tradicionais**: experiência unificada sem redirecionamentos
 
-Este projeto foi desenvolvido para uso privado.
+---
 
-## 🔗 Links Úteis
+## boas práticas
 
-- [Lovable Project Dashboard](https://lovable.dev/projects/4ca1593d-8d28-4273-9432-cacdf6428fcc)
-- [Supabase Dashboard](https://app.supabase.com)
-- [Tailwind CSS Docs](https://tailwindcss.com/docs)
-- [shadcn/ui Components](https://ui.shadcn.com)
+* **privacidade**: dados de usuários anonimizados para treinamento de modelos IA, conformidade com LGPD
+* **acessibilidade**: suporte a leitores de tela, contraste adequado, navegação por teclado
+* **performance**: lazy loading, caching inteligente, otimização de imagens
 
-## 📞 Suporte
+---
 
-Para questões ou problemas, abra uma issue no repositório.
+## contribuir
+
+1. faça fork do projeto
+2. crie sua branch: `git checkout -b feature/nova-feature`
+3. commit: `git commit -m "feat: adiciona busca por voz"`
+4. push: `git push origin feature/nova-feature`
+5. abra um pull request
+
+**guidelines**: padronize tipagem TypeScript, adicione testes para novas features, atualize documentação, siga padrões de commits convencionais.
+
+---
+
+## equipe
+
+**Julia Bacci** — desenvolvedor & product lead
+
+* LinkedIn: [https://linkedin.com/in/jlobacci](https://linkedin.com/in/jlobacci)
+* GitHub: [https://github.com/jlobacci](https://github.com/jlobacci)
+* Email: jlobacci@example.com
+
+---
+
+## licença
+
+MIT — veja [LICENSE](LICENSE).
+
+---
+
+## agradecimentos
+
+Construído durante o **AI Builder Hackathon 2025** com paixão e muito código. Agradecimentos especiais à comunidade Lovable e todos os contribuidores open-source que tornaram este projeto possível.
+
+---
+
+> feito com ❤️ para conectar pessoas a experiências incríveis — porque a vida não acontece só entre a casa e o trabalho.
