@@ -140,7 +140,7 @@ export const UpcomingEvents: React.FC = () => {
   }
 
   return (
-    <Card className="sticky top-24 self-start">
+    <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Calendar className="w-4 h-4" />
