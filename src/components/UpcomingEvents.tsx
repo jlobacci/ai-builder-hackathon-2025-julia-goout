@@ -40,15 +40,28 @@ export const UpcomingEvents: React.FC = () => {
 
     const today = new Date().toISOString().split('T')[0];
 
+    // First get invites created by user
+    const { data: myInvites } = await supabase
+      .from('invites')
+      .select('id')
+      .eq('author_id', user.id);
+
+    const myInviteIds = myInvites?.map(i => i.id) || [];
+
     // Get slots for Outs created by user
-    const { data: authorSlots } = await supabase
-      .from('invite_slots')
-      .select(`
-        *,
-        invite:invites(id, title, city, mode, author_id)
-      `)
-      .gte('date', today)
-      .eq('invite.author_id', user.id);
+    let authorSlots: any[] = [];
+    if (myInviteIds.length > 0) {
+      const { data } = await supabase
+        .from('invite_slots')
+        .select(`
+          *,
+          invite:invites(id, title, city, mode, author_id)
+        `)
+        .gte('date', today)
+        .in('invite_id', myInviteIds);
+
+      authorSlots = data || [];
+    }
 
     // Get all applications from user (aceito, pendente, recusado)
     const { data: applications } = await supabase
