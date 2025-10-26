@@ -88,19 +88,18 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="min-h-screen flex flex-col w-full bg-background">
       {/* Fixed Top Navbar */}
       <header className="fixed top-0 left-0 right-0 z-50 h-16 bg-card border-b border-border shadow-sm">
-        <div className="max-w-[1200px] mx-auto px-6 h-full grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6 items-center">
-          {/* Logo */}
-          <button 
-            onClick={() => navigate('/feed')}
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity lg:justify-start justify-center"
-          >
-            <Logo size="lg" />
-          </button>
+        <div className="max-w-[1200px] mx-auto px-6 h-full">
+          <div className="grid grid-cols-[auto_1fr_auto] gap-6 items-center h-full">
+            {/* Logo */}
+            <button 
+              onClick={() => navigate('/feed')}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+            >
+              <Logo size="lg" />
+            </button>
 
-          {/* Right side - Navigation + Profile */}
-          <div className="hidden lg:flex items-center max-w-[700px] w-full justify-between">
-            {/* Desktop Navigation */}
-            <nav className="flex items-center gap-1">
+            {/* Desktop Navigation - Centered with 2x spacing */}
+            <nav className="hidden lg:flex items-center justify-center gap-6">
               {navItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
@@ -109,21 +108,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <NavLink
                     key={item.path}
                     to={item.path}
-                    className={`flex flex-col items-center px-4 py-2 rounded-lg transition-all ${
+                    className={`flex flex-col items-center px-3 py-2 rounded-lg transition-all ${
                       active 
-                        ? 'text-primary border-b-2 border-primary' 
+                        ? 'text-[hsl(var(--primary))]' 
                         : 'text-muted-foreground hover:text-foreground hover:bg-accent'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
-                    <span className="text-xs mt-1">{item.label}</span>
+                    <span className={`text-xs mt-1 ${active ? 'border-b-2 border-[hsl(var(--primary))]' : ''}`}>
+                      {item.label}
+                    </span>
                   </NavLink>
                 );
               })}
             </nav>
 
             {/* Notifications + Profile Avatar */}
-            <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center gap-2">
               <NotificationsDropdown />
               
               <DropdownMenu>

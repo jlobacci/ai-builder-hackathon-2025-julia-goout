@@ -10,6 +10,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { MapPin, Edit, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
 import { OutMessagesBlock } from '@/components/OutMessagesBlock';
 import { CalendarView } from '@/components/CalendarView';
+import { PendingApplications } from '@/components/PendingApplications';
 
 const MyOuts: React.FC = () => {
   const { user } = useAuth();
@@ -282,7 +283,12 @@ const MyOuts: React.FC = () => {
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-3">
+                     <CardContent className="space-y-3">
+                      <PendingApplications 
+                        inviteId={out.id}
+                        onUpdate={loadData}
+                      />
+                      
                       <div className="flex gap-2">
                         <Button
                           onClick={() => navigate(`/out/${out.id}`)}

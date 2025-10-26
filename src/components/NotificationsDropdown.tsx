@@ -59,6 +59,17 @@ export const NotificationsDropdown: React.FC = () => {
 
     const allNotifications: Notification[] = [];
 
+    // Get last seen timestamp
+    const { data: notifState } = await supabase
+      .from('user_notification_state')
+      .select('last_seen_at')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const lastSeenAt = notifState?.last_seen_at 
+      ? new Date(notifState.last_seen_at) 
+      : new Date(0);
+
     // 1. Get unread messages
     const { data: messages } = await supabase
       .from('messages')
@@ -152,8 +163,34 @@ export const NotificationsDropdown: React.FC = () => {
     allNotifications.sort((a, b) => b.time.getTime() - a.time.getTime());
     const recentNotifications = allNotifications.slice(0, 5);
     
+    // Only count notifications after last_seen_at
+    const unreadNotifications = allNotifications.filter(n => n.time > lastSeenAt);
+    
     setNotifications(recentNotifications);
-    setUnreadCount(allNotifications.length);
+    setUnreadCount(unreadNotifications.length);
+  };
+
+  const markAsRead = async () => {
+    if (!user) return;
+
+    try {
+      // Upsert last_seen_at
+      const { error } = await supabase
+        .from('user_notification_state')
+        .upsert(
+          { user_id: user.id, last_seen_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+          { onConflict: 'user_id' }
+        );
+
+      if (error) throw error;
+
+      // Clear badge with fade animation
+      setTimeout(() => {
+        setUnreadCount(0);
+      }, 300);
+    } catch (error) {
+      console.error('Error marking as read:', error);
+    }
   };
 
   const handleNotificationClick = (notification: Notification) => {
@@ -180,8 +217,18 @@ export const NotificationsDropdown: React.FC = () => {
           animation: 'fadeIn 200ms ease-in-out'
         }}
       >
-        <div className="p-4 border-b">
+        <div className="p-4 border-b flex items-center justify-between">
           <h3 className="font-semibold">Notificações</h3>
+          {unreadCount > 0 && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={markAsRead}
+              className="h-7 text-xs hover:bg-accent"
+            >
+              Lido
+            </Button>
+          )}
         </div>
         
         <div className="max-h-96 overflow-y-auto">

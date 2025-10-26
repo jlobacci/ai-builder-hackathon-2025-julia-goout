@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { PendingApplications } from '@/components/PendingApplications';
 
 const OutDetail: React.FC = () => {
   const { id } = useParams();
@@ -186,15 +187,25 @@ const OutDetail: React.FC = () => {
             </div>
           </CardHeader>
 
-          <CardContent>
-            <div className="prose max-w-none mb-6">
+          <CardContent className="space-y-4">
+            <div className="prose max-w-none">
               <p className="text-foreground">{out.description || 'Sem descrição'}</p>
             </div>
 
+            {/* Show pending applications if user is the organizer */}
+            {user && out.author_id === user.id && (
+              <PendingApplications 
+                inviteId={Number(id)}
+                onUpdate={loadOut}
+              />
+            )}
+
             <div className="flex gap-3">
-              <Button onClick={handleApply} className="btn-primary">
-                Candidatar-se
-              </Button>
+              {user && out.author_id !== user.id && (
+                <Button onClick={handleApply} className="btn-primary">
+                  Candidatar-se
+                </Button>
+              )}
               <Button
                 variant="outline"
                 onClick={() => navigate(`/out/${id}/chat`)}

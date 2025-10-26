@@ -923,6 +923,24 @@ export type Database = {
           },
         ]
       }
+      user_notification_state: {
+        Row: {
+          last_seen_at: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_seen_at?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_seen_at?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_dm_threads_for_user: {
