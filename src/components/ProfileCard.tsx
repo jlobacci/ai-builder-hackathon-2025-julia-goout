@@ -44,7 +44,7 @@ export const ProfileCard: React.FC = () => {
 
   return (
     <Card 
-      className="sticky top-20 w-full bg-card shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
+      className="w-full bg-card shadow-md hover:shadow-lg transition-all duration-200 cursor-pointer"
       onClick={() => navigate('/profile')}
     >
       <CardContent className="p-6 flex flex-col items-center text-center space-y-4">
