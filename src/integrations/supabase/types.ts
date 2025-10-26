@@ -16,7 +16,7 @@ export type Database = {
     Tables: {
       applications: {
         Row: {
-          applicant_id: string | null
+          applicant_id: string
           created_at: string | null
           id: number
           invite_id: number | null
@@ -24,7 +24,7 @@ export type Database = {
           status: string | null
         }
         Insert: {
-          applicant_id?: string | null
+          applicant_id: string
           created_at?: string | null
           id?: number
           invite_id?: number | null
@@ -32,7 +32,7 @@ export type Database = {
           status?: string | null
         }
         Update: {
-          applicant_id?: string | null
+          applicant_id?: string
           created_at?: string | null
           id?: number
           invite_id?: number | null
@@ -299,7 +299,7 @@ export type Database = {
       }
       invites: {
         Row: {
-          author_id: string | null
+          author_id: string
           bring_own_materials: boolean | null
           city: string | null
           created_at: string | null
@@ -320,7 +320,7 @@ export type Database = {
           title: string
         }
         Insert: {
-          author_id?: string | null
+          author_id: string
           bring_own_materials?: boolean | null
           city?: string | null
           created_at?: string | null
@@ -341,7 +341,7 @@ export type Database = {
           title: string
         }
         Update: {
-          author_id?: string | null
+          author_id?: string
           bring_own_materials?: boolean | null
           city?: string | null
           created_at?: string | null
@@ -445,21 +445,21 @@ export type Database = {
           created_at: string | null
           id: number
           invite_id: number | null
-          sender_id: string | null
+          sender_id: string
         }
         Insert: {
           body: string
           created_at?: string | null
           id?: number
           invite_id?: number | null
-          sender_id?: string | null
+          sender_id: string
         }
         Update: {
           body?: string
           created_at?: string | null
           id?: number
           invite_id?: number | null
-          sender_id?: string | null
+          sender_id?: string
         }
         Relationships: [
           {
