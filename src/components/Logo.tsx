@@ -1,11 +1,12 @@
 import React from 'react';
 import logoImage from '@/assets/logo.png';
 
-export const Logo: React.FC<{ size?: 'sm' | 'md' | 'lg' }> = ({ size = 'md' }) => {
+export const Logo: React.FC<{ size?: 'sm' | 'md' | 'lg' | 'xl' }> = ({ size = 'md' }) => {
   const sizeClasses = {
     sm: 'h-6',
     md: 'h-8',
-    lg: 'h-12'
+    lg: 'h-12',
+    xl: 'h-16'
   };
 
   return (

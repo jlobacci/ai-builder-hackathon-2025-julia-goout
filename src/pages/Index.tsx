@@ -31,8 +31,8 @@ const Index = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Logo size="md" />
+          <div className="flex h-20 items-center justify-between">
+            <Logo size="xl" />
             <Button
               variant="outline"
               onClick={() => navigate("/auth")}
@@ -206,7 +206,7 @@ const Index = () => {
       <footer className="bg-white border-t">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <Logo size="md" />
+            <Logo size="lg" />
             <div className="flex flex-wrap gap-6 text-sm text-[#6F6F6F]">
               <a href="/privacy" className="hover:text-[#B6463A] transition-colors">
                 Política de Privacidade
