@@ -32,6 +32,9 @@ export const UpcomingEvents: React.FC = () => {
   useEffect(() => {
     if (user) {
       loadUpcomingEvents();
+      // Auto-refresh every 60 seconds
+      const interval = setInterval(loadUpcomingEvents, 60000);
+      return () => clearInterval(interval);
     }
   }, [user]);
 
@@ -40,7 +43,7 @@ export const UpcomingEvents: React.FC = () => {
 
     const today = new Date().toISOString().split('T')[0];
 
-    // Get slots for Outs created by user
+    // Get slots for Outs created by user (as organizer)
     const { data: authorSlots } = await supabase
       .from('invite_slots')
       .select(`
@@ -51,9 +54,9 @@ export const UpcomingEvents: React.FC = () => {
       .eq('invite.author_id', user.id)
       .order('date', { ascending: true })
       .order('start_time', { ascending: true })
-      .limit(3);
+      .limit(10);
 
-    // Get slots for Outs user applied to
+    // Get applications with accepted status
     const { data: applications } = await supabase
       .from('applications')
       .select(`
@@ -66,6 +69,7 @@ export const UpcomingEvents: React.FC = () => {
 
     const appliedInviteIds = applications?.map(a => a.invite_id) || [];
 
+    // Get slots for Outs user applied to (as applicant)
     let applicantSlots: any[] = [];
     if (appliedInviteIds.length > 0) {
       const { data } = await supabase
@@ -78,12 +82,12 @@ export const UpcomingEvents: React.FC = () => {
         .in('invite_id', appliedInviteIds)
         .order('date', { ascending: true })
         .order('start_time', { ascending: true })
-        .limit(3);
+        .limit(10);
 
       applicantSlots = data || [];
     }
 
-    // Combine and mark slots
+    // Combine and mark slots with role badge
     const allSlots: UpcomingEvent[] = [
       ...(authorSlots?.map(s => ({
         ...s,
@@ -99,14 +103,14 @@ export const UpcomingEvents: React.FC = () => {
       }) || [])
     ];
 
-    // Sort by date and time, take top 3
+    // Sort by date and time
     allSlots.sort((a, b) => {
       const dateCompare = a.date.localeCompare(b.date);
       if (dateCompare !== 0) return dateCompare;
       return a.start_time.localeCompare(b.start_time);
     });
 
-    // Filter out events with null invites (deleted invites)
+    // Filter out events with null invites (deleted invites) and take top 3
     const validEvents = allSlots.filter(e => e.invite !== null);
     
     setEvents(validEvents.slice(0, 3));
@@ -155,9 +159,9 @@ export const UpcomingEvents: React.FC = () => {
                 {event.invite.title}
               </h4>
               {event.isAuthor ? (
-                <Badge variant="secondary" className="text-xs shrink-0">Criado</Badge>
+                <Badge variant="secondary" className="text-xs shrink-0">Organizador</Badge>
               ) : (
-                <Badge className="text-xs shrink-0 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90">Aceito</Badge>
+                <Badge className="text-xs shrink-0 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90">Candidato</Badge>
               )}
             </div>
             

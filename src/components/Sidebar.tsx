@@ -32,8 +32,8 @@ export const Sidebar: React.FC = () => {
   }, [user]);
 
   const menuItems = [
-    { to: '/outs', label: 'Descobrir Outs', icon: Compass },
     { to: '/feed', label: 'Feed', icon: Newspaper },
+    { to: '/outs', label: 'Outs', icon: Compass },
     { to: '/out/new', label: 'Criar Out', icon: Plus },
     { to: '/my-outs', label: 'Meus Outs', icon: Calendar },
     { to: '/messages', label: 'Mensagens', icon: MessageCircle },

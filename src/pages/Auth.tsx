@@ -31,11 +31,10 @@ const Auth: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Remove auto-redirect - always show form
   useEffect(() => {
-    if (user) {
-      checkProfileAndRedirect();
-    }
-  }, [user]);
+    // Only redirect after successful login, not on page load
+  }, []);
 
   const checkProfileAndRedirect = async () => {
     if (!user) return;
@@ -67,7 +66,7 @@ const Auth: React.FC = () => {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
@@ -78,6 +77,21 @@ const Auth: React.FC = () => {
       return;
     }
 
+    // After successful login, check profile and redirect
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', data.user.id)
+        .maybeSingle();
+
+      if (!profile) {
+        navigate('/onboarding');
+      } else {
+        navigate('/outs');
+      }
+    }
+    
     setLoading(false);
   };
 
@@ -120,13 +134,27 @@ const Auth: React.FC = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <Logo size="md" />
-            <Button
-              variant="ghost" 
-              onClick={() => navigate('/')}
-              className="text-[#6F6F6F] hover:text-[#B6463A]"
-            >
-              Voltar ao site
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={async () => {
+                  await supabase.auth.signOut({ scope: 'global' });
+                  localStorage.clear();
+                  sessionStorage.clear();
+                  toast.success('Sessão encerrada. Você pode fazer login com outra conta.');
+                }}
+                className="text-[#6F6F6F] hover:text-[#B6463A]"
+              >
+                Trocar de conta
+              </Button>
+              <Button
+                variant="ghost" 
+                onClick={() => navigate('/')}
+                className="text-[#6F6F6F] hover:text-[#B6463A]"
+              >
+                Voltar ao site
+              </Button>
+            </div>
           </div>
         </div>
       </header>

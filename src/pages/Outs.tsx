@@ -18,6 +18,7 @@ const Outs: React.FC = () => {
   const [selectedHobby, setSelectedHobby] = useState<string>('all');
   const [selectedMode, setSelectedMode] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [nextSlots, setNextSlots] = useState<Record<number, any>>({});
 
   useEffect(() => {
     loadData();
@@ -38,8 +39,61 @@ const Outs: React.FC = () => {
       `)
       .order('created_at', { ascending: false });
 
-    if (outsData) setOuts(outsData);
+    if (outsData) {
+      setOuts(outsData);
+      // Load next slots for each out
+      await loadNextSlots(outsData);
+    }
     setLoading(false);
+  };
+
+  const loadNextSlots = async (outsData: any[]) => {
+    const slots: Record<number, any> = {};
+    const today = new Date().toISOString().split('T')[0];
+
+    for (const out of outsData) {
+      // Try to get future slot first
+      let { data } = await supabase
+        .from('invite_slots')
+        .select('date, start_time')
+        .eq('invite_id', out.id)
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      // If no future slot, get any slot
+      if (!data) {
+        const result = await supabase
+          .from('invite_slots')
+          .select('date, start_time')
+          .eq('invite_id', out.id)
+          .order('date', { ascending: true })
+          .order('start_time', { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        data = result.data;
+      }
+
+      if (data) {
+        slots[out.id] = data;
+      }
+    }
+
+    setNextSlots(slots);
+  };
+
+  const formatSlotDate = (slot: any) => {
+    if (!slot) return null;
+    const date = new Date(slot.date + 'T00:00:00');
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    if (slot.start_time) {
+      const time = slot.start_time.substring(0, 5);
+      return `${day}/${month} às ${time}`;
+    }
+    return `${day}/${month}`;
   };
 
   const filteredOuts = outs.filter((out) => {
@@ -123,9 +177,15 @@ const Outs: React.FC = () => {
                         <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
                       </div>
                       {out.city && (
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5 text-sm text-[#6B6B6B]">
                           <MapPin className="w-4 h-4" />
                           {out.city}
+                          {nextSlots[out.id] && (
+                            <>
+                              <span className="mx-1">•</span>
+                              <span>{formatSlotDate(nextSlots[out.id])}</span>
+                            </>
+                          )}
                         </div>
                       )}
                     </div>

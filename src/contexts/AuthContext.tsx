@@ -37,10 +37,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    // Global sign out
+    await supabase.auth.signOut({ scope: 'global' });
+    
+    // Clear all storage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Clear states
     setUser(null);
     setSession(null);
-    window.location.href = '/';
+    
+    // Redirect to landing with signedout flag
+    window.location.href = '/?signedout=1';
   };
 
   return (
