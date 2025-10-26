@@ -281,9 +281,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
               {/* Left Sidebar - Profile Card + Upcoming Events (Desktop only) */}
               <aside className="hidden lg:block space-y-4">
                 <ProfileCard />
-                <div className="sticky top-20">
-                  <UpcomingEvents />
-                </div>
+                <UpcomingEvents />
               </aside>
 
               {/* Main Content - Max width ~700px for optimal readability */}
