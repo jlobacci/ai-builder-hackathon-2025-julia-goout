@@ -288,22 +288,46 @@ const Feed: React.FC = () => {
   };
 
   const toggleLike = async (postId: number, currentlyLiked: boolean) => {
+    if (!user) {
+      console.error('User not authenticated');
+      toast({ title: 'Você precisa estar logado', variant: 'destructive' });
+      return;
+    }
+
+    console.log('Toggle like:', { postId, currentlyLiked, userId: user.id });
+
     try {
       if (currentlyLiked) {
-        await supabase
+        const { error } = await supabase
           .from('post_likes' as any)
           .delete()
           .eq('post_id', postId)
-          .eq('user_id', user?.id);
+          .eq('user_id', user.id);
+        
+        if (error) {
+          console.error('Error removing like:', error);
+          throw error;
+        }
+        console.log('Like removed successfully');
       } else {
-        await supabase
+        const { error } = await supabase
           .from('post_likes' as any)
-          .insert({ post_id: postId, user_id: user?.id });
+          .insert({ post_id: postId, user_id: user.id });
+        
+        if (error) {
+          console.error('Error adding like:', error);
+          throw error;
+        }
+        console.log('Like added successfully');
       }
       // Realtime will trigger reload
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error toggling like:', error);
-      toast({ title: 'Erro ao curtir', variant: 'destructive' });
+      toast({ 
+        title: 'Erro ao curtir', 
+        description: error.message || 'Tente novamente',
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -336,18 +360,39 @@ const Feed: React.FC = () => {
 
   const submitComment = async (postId: number) => {
     const text = commentText[postId]?.trim();
-    if (!text) return;
+    if (!text) {
+      toast({ title: 'Comentário não pode ser vazio', variant: 'destructive' });
+      return;
+    }
+
+    if (!user) {
+      console.error('User not authenticated');
+      toast({ title: 'Você precisa estar logado', variant: 'destructive' });
+      return;
+    }
+
+    console.log('Submitting comment:', { postId, userId: user.id, text });
 
     try {
-      await supabase
+      const { error } = await supabase
         .from('post_comments' as any)
-        .insert({ post_id: postId, author_id: user?.id, body: text });
+        .insert({ post_id: postId, author_id: user.id, body: text });
 
+      if (error) {
+        console.error('Error posting comment:', error);
+        throw error;
+      }
+
+      console.log('Comment posted successfully');
       setCommentText((prev) => ({ ...prev, [postId]: '' }));
       // Realtime will trigger update
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error posting comment:', error);
-      toast({ title: 'Erro ao comentar', variant: 'destructive' });
+      toast({ 
+        title: 'Erro ao comentar', 
+        description: error.message || 'Tente novamente',
+        variant: 'destructive' 
+      });
     }
   };
 
