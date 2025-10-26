@@ -43,22 +43,22 @@ O **GoOut** nasceu para te tirar da rotina, te conectar com pessoas e te inspira
 
 ## principais recursos
 
-### 🎭 **Anúncio de eventos publicamente**  
+### 📢 **Anúncio de eventos publicamente**  
 Anuncie atividades que gostaria de fazer, encontre pessoas que estão buscando o mesmo, marquem um dia e ocupem os espaços.
 
-### 🎫 **verificações de segurança**  
-Verificação de antecedentes por CPF e checagem de foto com IA, garantindo conexões seguras, experiências reais.
+### 🛡️ **Verificações de segurança**  
+Verificação de antecedentes por CPF e checagem de foto com IA, garantindo conexões seguras e experiências reais.
 
-### 📍 **Espaço para pequenos empreendedores**  
+### 🏪 **Espaço para pequenos empreendedores**  
 Divulgue aulas e atividades em grupos, encontre pessoas buscando por nichos e crie eventos que conectam e geram valor.
 
-### 💾 **Conheça pessoas reais**  
-Encontre e se conecte com pessoas que, como você, estão buscando amizades reais.
+### 🤝 **Conheça pessoas reais**  
+Encontre e se conecte com pessoas que, como você, estão buscando amizades genuínas e encontros presenciais.
 
-### 🌐 **multi-região**  
-Suporte inicial para Brasil, com expansão planejada para América Latina e Europa. interface adaptável e dados localizados.
+### 🌎 **Multi-região**  
+Suporte inicial para o Brasil, com expansão planejada para América Latina e Europa. Interface adaptável e dados localizados.
 
-### ⚡ **Stack moderna e escalável**  
+### 🧩 **Stack moderna e escalável**  
 React + TypeScript + Vite no front; Supabase (auth/db/storage) + integração com APIs de eventos e gateways de pagamento no back.
 
 ---
