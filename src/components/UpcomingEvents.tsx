@@ -40,33 +40,17 @@ export const UpcomingEvents: React.FC = () => {
 
     const today = new Date().toISOString().split('T')[0];
 
-    // First get invites created by user
-    const { data: myInvites } = await supabase
-      .from('invites')
-      .select('id')
-      .eq('author_id', user.id);
-
-    const myInviteIds = myInvites?.map(i => i.id) || [];
-
     // Get slots for Outs created by user
-    let authorSlots: any[] = [];
-    if (myInviteIds.length > 0) {
-      const { data } = await supabase
-        .from('invite_slots')
-        .select(`
-          *,
-          invite:invites(id, title, city, mode, author_id)
-        `)
-        .gte('date', today)
-        .in('invite_id', myInviteIds)
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .limit(3);
+    const { data: authorSlots } = await supabase
+      .from('invite_slots')
+      .select(`
+        *,
+        invite:invites(id, title, city, mode, author_id)
+      `)
+      .gte('date', today)
+      .eq('invite.author_id', user.id);
 
-      authorSlots = data || [];
-    }
-
-    // Get slots for Outs user applied to
+    // Get all applications from user (aceito, pendente, recusado)
     const { data: applications } = await supabase
       .from('applications')
       .select(`
@@ -74,8 +58,7 @@ export const UpcomingEvents: React.FC = () => {
         invite_id,
         invite:invites(id, title, city, mode, author_id)
       `)
-      .eq('applicant_id', user.id)
-      .eq('status', 'aceito');
+      .eq('applicant_id', user.id);
 
     const appliedInviteIds = applications?.map(a => a.invite_id) || [];
 
@@ -88,20 +71,17 @@ export const UpcomingEvents: React.FC = () => {
           invite:invites(id, title, city, mode, author_id)
         `)
         .gte('date', today)
-        .in('invite_id', appliedInviteIds)
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .limit(3);
+        .in('invite_id', appliedInviteIds);
 
       applicantSlots = data || [];
     }
 
     // Combine and mark slots
     const allSlots: UpcomingEvent[] = [
-      ...(authorSlots.map(s => ({
+      ...(authorSlots?.map(s => ({
         ...s,
         isAuthor: true
-      }))),
+      })) || []),
       ...(applicantSlots.map(s => {
         const app = applications?.find(a => a.invite_id === s.invite_id);
         return {
@@ -109,18 +89,18 @@ export const UpcomingEvents: React.FC = () => {
           isAuthor: false,
           applicationStatus: app?.status
         };
-      }))
+      }) || [])
     ];
 
-    // Sort by date and time, take top 3
+    // Sort by date and time
     allSlots.sort((a, b) => {
       const dateCompare = a.date.localeCompare(b.date);
       if (dateCompare !== 0) return dateCompare;
       return a.start_time.localeCompare(b.start_time);
     });
 
-    // Filter out events with null invites (deleted invites)
-    const validEvents = allSlots.filter(e => e.invite !== null);
+    // Filter out events with null invites (deleted invites) and take top 3
+    const validEvents = allSlots.filter(e => e.invite !== null && e.invite.title);
     
     setEvents(validEvents.slice(0, 3));
     setLoading(false);
@@ -169,9 +149,21 @@ export const UpcomingEvents: React.FC = () => {
                 {event.invite.title}
               </h4>
               {event.isAuthor ? (
-                <Badge variant="secondary" className="text-xs shrink-0">Criado</Badge>
+                <Badge variant="secondary" className="text-xs shrink-0 bg-[#B6463A] text-white hover:bg-[#B6463A]/90">
+                  Criado
+                </Badge>
+              ) : event.applicationStatus === 'aceito' ? (
+                <Badge className="text-xs shrink-0 bg-[#16A34A] text-white hover:bg-[#16A34A]/90">
+                  Aceito
+                </Badge>
+              ) : event.applicationStatus === 'pendente' ? (
+                <Badge variant="outline" className="text-xs shrink-0 border-[#D0D5DD] text-foreground">
+                  Pendente
+                </Badge>
               ) : (
-                <Badge className="text-xs shrink-0 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90">Aceito</Badge>
+                <Badge variant="outline" className="text-xs shrink-0">
+                  {event.applicationStatus}
+                </Badge>
               )}
             </div>
             
