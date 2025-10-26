@@ -105,6 +105,10 @@ export const UpcomingEvents: React.FC = () => {
       }) || [])
     ];
 
+    console.log('UpcomingEvents - authorSlots:', authorSlots?.length || 0);
+    console.log('UpcomingEvents - applicantSlots:', applicantSlots?.length || 0);
+    console.log('UpcomingEvents - allSlots combined:', allSlots.length);
+
     // Sort by date and time
     allSlots.sort((a, b) => {
       const dateCompare = a.date.localeCompare(b.date);
@@ -114,6 +118,8 @@ export const UpcomingEvents: React.FC = () => {
 
     // Filter out events with null invites (deleted invites) and take top 3
     const validEvents = allSlots.filter(e => e.invite !== null && e.invite.title);
+    
+    console.log('UpcomingEvents - valid events after filter:', validEvents.length);
     
     setEvents(validEvents.slice(0, 3));
     setLoading(false);

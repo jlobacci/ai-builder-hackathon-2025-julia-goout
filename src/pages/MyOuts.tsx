@@ -141,17 +141,22 @@ const MyOuts: React.FC = () => {
     if (!slots || slots.length === 0) return null;
     
     const today = new Date().toISOString().split('T')[0];
-    const futureSlots = slots.filter(s => s.date >= today);
     
-    if (futureSlots.length === 0) return null;
-    
-    futureSlots.sort((a, b) => {
+    // Sort all slots by date and time
+    const sortedSlots = [...slots].sort((a, b) => {
       const dateCompare = a.date.localeCompare(b.date);
       if (dateCompare !== 0) return dateCompare;
       return a.start_time.localeCompare(b.start_time);
     });
     
-    return futureSlots[0];
+    // Try to find future slots first
+    const futureSlots = sortedSlots.filter(s => s.date >= today);
+    if (futureSlots.length > 0) {
+      return futureSlots[0];
+    }
+    
+    // If no future slots, return the most recent past slot
+    return sortedSlots[sortedSlots.length - 1];
   };
 
   const formatDate = (dateString: string) => {
