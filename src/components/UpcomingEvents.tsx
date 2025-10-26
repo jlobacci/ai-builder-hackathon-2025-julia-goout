@@ -140,24 +140,25 @@ export const UpcomingEvents: React.FC = () => {
     return labels[mode as keyof typeof labels] || mode;
   };
 
-  if (loading) {
-    return null;
-  }
-
-  if (events.length === 0) {
-    return null;
-  }
-
   return (
     <Card className="sticky top-20">
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
           <Calendar className="w-4 h-4" />
-          Próximos Eventos
+          Próximos Outs
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {events.map((event) => (
+        {loading ? (
+          <div className="text-sm text-muted-foreground text-center py-4">
+            Carregando...
+          </div>
+        ) : events.length === 0 ? (
+          <div className="text-sm text-muted-foreground text-center py-4">
+            Nenhum evento próximo
+          </div>
+        ) : (
+          events.map((event) => (
           <div
             key={event.id}
             onClick={() => navigate(`/out/${event.invite.id}`)}
@@ -199,7 +200,8 @@ export const UpcomingEvents: React.FC = () => {
               )}
             </div>
           </div>
-        ))}
+          ))
+        )}
       </CardContent>
     </Card>
   );
