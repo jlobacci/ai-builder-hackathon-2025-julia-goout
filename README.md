@@ -1,22 +1,17 @@
-<h1 align="center">Hi 👋, I'm Julia</h1>
-<h3 align="center">A marketing specialist passionate by AI and creating</h3>
-<p>
-</p>
-- 🔭 I’m currently working on **Marketing AI Ops**
+<h1 align="center">Oi 👋, eu sou a Julia</h1>
+<h3 align="center">Especialista em Marketing apaixonada por IA 🤖 e por criar novas possibilidades ✨</h3>
 
-- 🌱 I’m currently learning **n8n**
+<p></p>
 
-- 👯 I’m looking to collaborate on **implamenting strategic AI in companies**
+- 💼 Atualmente trabalho com **Marketing AI Ops**  
+- 🚀 Estou aprendendo **potencializar as operações de marketing e vendas com IA e automações no-code/low-code**  
+- 🤝 Procuro colaborar em **implementações estratégicas de IA em empresas**  
+- 🧠 Busco apoio para **aprimorar habilidades em IA e programação**  
+- 💬 Fale comigo sobre **automações, IA estratégica e implementação de IA**  
+- 📫 Como me encontrar: **jlobacci@gmail.com**  
+- 🎨 Curiosidade: **Sou formada em Arquitetura, atuei 3 anos como Designer, me especializei em Marketing Digital e agora estou focada em facilitar a implementação de IA nas empresas - um pouco de tudo e de tudo um pouco**  
 
-- 🤝 I’m looking for help with **Upskilling in AI and Coding**
-
-- 💬 Ask me about **automations, strategic AI, AI implementation**
-
-- 📫 How to reach me **jlobacci@gmail.com**
-
-- ⚡ Fun fact: **I graduated in Architecture, worked as a Designer, specialized in marketing and I'm currinting shiffiting to facilitade AI implementations for companies**
-
-<h3 align="left">Connect with me:</h3>
+<h3 align="left">🌐 Conecte-se comigo:</h3>
 <p align="left">
 <a href="https://linkedin.com/in/https://www.linkedin.com/in/julia-bacci/" target="blank"><img align="center" src="https://raw.githubusercontent.com/rahuldkjain/github-profile-readme-generator/master/src/images/icons/Social/linked-in-alt.svg" alt="https://www.linkedin.com/in/julia-bacci/" height="30" width="40" /></a>
 </p>
