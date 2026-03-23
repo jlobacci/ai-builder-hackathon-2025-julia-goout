@@ -1,66 +1,55 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
+import React, { createContext, useContext, useState, useCallback } from 'react';
+import { MOCK_USERS, getProfile } from '@/lib/mock-data';
+
+interface MockUser {
+  id: string;
+  email: string;
+}
 
 interface AuthContextType {
-  user: User | null;
-  session: Session | null;
+  user: MockUser | null;
+  session: { user: MockUser } | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const VALID_CREDENTIALS = {
+  email: 'julia@goout.com',
+  password: 'goout2024',
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<MockUser | null>(() => {
+    const stored = localStorage.getItem('mock_user');
+    if (stored) {
+      try { return JSON.parse(stored); } catch { return null; }
+    }
+    return null;
+  });
 
-  useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+  const session = user ? { user } : null;
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+  const signIn = useCallback(async (email: string, password: string) => {
+    if (email === VALID_CREDENTIALS.email && password === VALID_CREDENTIALS.password) {
+      const mockUser: MockUser = { id: MOCK_USERS.julia.id, email: MOCK_USERS.julia.email };
+      setUser(mockUser);
+      localStorage.setItem('mock_user', JSON.stringify(mockUser));
+      return { success: true };
+    }
+    return { success: false, error: 'E-mail ou senha incorretos.' };
   }, []);
 
-  const signOut = async () => {
-    // Global sign out
-    await supabase.auth.signOut({ scope: 'global' });
-    
-    // Clear specific auth tokens
-    try {
-      localStorage.removeItem('supabase.auth.token');
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || '';
-      if (projectId) {
-        localStorage.removeItem(`sb-${projectId}-auth-token`);
-      }
-    } catch (error) {
-      console.error('Error clearing auth tokens:', error);
-    }
-    
-    // Clear states
+  const signOut = useCallback(async () => {
     setUser(null);
-    setSession(null);
-    
-    // Redirect to auth page with logged_out flag
+    localStorage.removeItem('mock_user');
     window.location.replace('/auth?logged_out=1');
-  };
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading: false, signOut, signIn }}>
       {children}
     </AuthContext.Provider>
   );
