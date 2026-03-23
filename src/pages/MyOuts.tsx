@@ -1,430 +1,103 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Layout } from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { MOCK_INVITES, MOCK_HOBBIES, MOCK_APPLICATIONS, MOCK_INVITE_SLOTS } from '@/lib/mock-data';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { MapPin, Edit, MessageCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { MapPin, Edit, MessageCircle } from 'lucide-react';
 import { OutMessagesBlock } from '@/components/OutMessagesBlock';
 import { CalendarView } from '@/components/CalendarView';
 import { PendingApplications } from '@/components/PendingApplications';
+import { useState } from 'react';
 
 const MyOuts: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [createdOuts, setCreatedOuts] = useState<any[]>([]);
-  const [applications, setApplications] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [expandedOuts, setExpandedOuts] = useState<Set<number>>(new Set());
-  const [unreadCounts, setUnreadCounts] = useState<Record<number, number>>({});
-  const [nextSlots, setNextSlots] = useState<Record<number, any>>({});
-  
   const defaultTab = searchParams.get('tab') === 'calendar' ? 'calendar' : 'created';
 
-  useEffect(() => {
-    if (user) {
-      loadData();
-      loadUnreadCounts();
-    }
-  }, [user]);
+  if (!user) return null;
 
-  const loadData = async () => {
-    if (!user) return;
+  const createdOuts = MOCK_INVITES.filter(i => i.author_id === user.id).map(inv => {
+    const hobby = MOCK_HOBBIES.find(h => h.id === inv.hobby_id);
+    return { ...inv, hobby: hobby ? { name: hobby.name } : null };
+  });
 
-    setLoading(true);
+  const applications = MOCK_APPLICATIONS.filter(a => a.applicant_id === user.id).map(app => {
+    const invite = MOCK_INVITES.find(i => i.id === app.invite_id);
+    const hobby = invite ? MOCK_HOBBIES.find(h => h.id === invite.hobby_id) : null;
+    return { ...app, invite: invite ? { ...invite, hobby: hobby ? { name: hobby.name } : null } : null };
+  });
 
-    const { data: created } = await supabase
-      .from('invites')
-      .select(`
-        *,
-        hobby:hobbies(name)
-      `)
-      .eq('author_id', user.id)
-      .order('created_at', { ascending: false });
-
-    const { data: apps } = await supabase
-      .from('applications')
-      .select(`
-        *,
-        invite:invites(
-          id,
-          title,
-          city,
-          mode,
-          author_id,
-          hobby:hobbies(name)
-        )
-      `)
-      .eq('applicant_id', user.id)
-      .order('created_at', { ascending: false });
-
-    if (created) {
-      setCreatedOuts(created);
-      await loadNextSlotsForOuts(created);
-    }
-    if (apps) {
-      setApplications(apps);
-      const invites = apps.map(a => a.invite).filter(Boolean);
-      await loadNextSlotsForOuts(invites);
-    }
-    setLoading(false);
-  };
-
-  const loadNextSlotsForOuts = async (outsData: any[]) => {
-    const slots: Record<number, any> = {};
-    const today = new Date().toISOString().split('T')[0];
-
-    for (const out of outsData) {
-      const outId = out.id || out.invite?.id;
-      if (!outId) continue;
-
-      // Try to get future slot first
-      let { data } = await supabase
-        .from('invite_slots')
-        .select('date, start_time')
-        .eq('invite_id', outId)
-        .gte('date', today)
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-
-      // If no future slot, get any slot
-      if (!data) {
-        const result = await supabase
-          .from('invite_slots')
-          .select('date, start_time')
-          .eq('invite_id', outId)
-          .order('date', { ascending: true })
-          .order('start_time', { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        data = result.data;
-      }
-
-      if (data) {
-        slots[outId] = data;
-      }
-    }
-
-    setNextSlots(prev => ({ ...prev, ...slots }));
-  };
-
-  const formatSlotDate = (slot: any) => {
-    if (!slot) return null;
-    const date = new Date(slot.date + 'T00:00:00');
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    if (slot.start_time) {
-      const time = slot.start_time.substring(0, 5);
-      return `${day}/${month} às ${time}`;
-    }
-    return `${day}/${month}`;
-  };
-
-  const loadUnreadCounts = async () => {
-    if (!user) return;
-
-    // Get all invite IDs for the user (created + applied)
-    const { data: created } = await supabase
-      .from('invites')
-      .select('id')
-      .eq('author_id', user.id);
-
-    const { data: apps } = await supabase
-      .from('applications')
-      .select('invite_id')
-      .eq('applicant_id', user.id);
-
-    const inviteIds = [
-      ...(created?.map(i => i.id) || []),
-      ...(apps?.map(a => a.invite_id) || [])
-    ];
-
-    if (inviteIds.length === 0) return;
-
-    // Count unread messages for each invite
-    const counts: Record<number, number> = {};
-    
-    for (const inviteId of inviteIds) {
-      const { count } = await supabase
-        .from('messages')
-        .select('id', { count: 'exact', head: true })
-        .eq('invite_id', inviteId)
-        .neq('sender_id', user.id)
-        .not('id', 'in', 
-          `(select message_id from message_reads where user_id = '${user.id}')`
-        );
-      
-      if (count && count > 0) {
-        counts[inviteId] = count;
-      }
-    }
-
-    setUnreadCounts(counts);
-  };
-
-  const toggleExpanded = (outId: number) => {
-    const newExpanded = new Set(expandedOuts);
-    if (newExpanded.has(outId)) {
-      newExpanded.delete(outId);
-    } else {
-      newExpanded.add(outId);
-    }
-    setExpandedOuts(newExpanded);
-  };
-
-  const getModeLabel = (mode: string) => {
-    const labels = {
-      presencial: 'Presencial',
-      online: 'Online',
-      hibrido: 'Híbrido'
-    };
-    return labels[mode as keyof typeof labels] || mode;
-  };
-
-  const getStatusLabel = (status: string) => {
-    const labels = {
-      pendente: 'Pendente',
-      aceito: 'Aceito',
-      rejeitado: 'Rejeitado'
-    };
-    return labels[status as keyof typeof labels] || status;
-  };
+  const getModeLabel = (mode: string) => ({ presencial: 'Presencial', online: 'Online', hibrido: 'Híbrido' }[mode] || mode);
+  const getStatusLabel = (status: string) => ({ pendente: 'Pendente', aceito: 'Aceito', rejeitado: 'Rejeitado' }[status] || status);
+  const toggleExpanded = (id: number) => { const s = new Set(expandedOuts); s.has(id) ? s.delete(id) : s.add(id); setExpandedOuts(s); };
 
   return (
     <Layout>
       <div className="max-w-5xl mx-auto">
         <h1 className="text-3xl font-bold mb-6">Meus Outs</h1>
-
         <Tabs defaultValue={defaultTab}>
           <TabsList className="mb-6">
-            <TabsTrigger value="created">
-              Criados por mim
-              {Object.keys(unreadCounts).filter(k => 
-                createdOuts.some(o => o.id === Number(k))
-              ).length > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full">
-                  {Object.keys(unreadCounts).filter(k => 
-                    createdOuts.some(o => o.id === Number(k))
-                  ).length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="applications">
-              Minhas candidaturas
-              {Object.keys(unreadCounts).filter(k => 
-                applications.some(a => a.invite?.id === Number(k))
-              ).length > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center rounded-full">
-                  {Object.keys(unreadCounts).filter(k => 
-                    applications.some(a => a.invite?.id === Number(k))
-                  ).length}
-                </Badge>
-              )}
-            </TabsTrigger>
+            <TabsTrigger value="created">Criados por mim</TabsTrigger>
+            <TabsTrigger value="applications">Minhas candidaturas</TabsTrigger>
             <TabsTrigger value="calendar">Calendário</TabsTrigger>
           </TabsList>
-
           <TabsContent value="created">
-            {loading ? (
-              <p className="text-center text-muted-foreground">Carregando...</p>
-            ) : createdOuts.length === 0 ? (
-              <p className="text-center text-muted-foreground">
-                Você ainda não criou nenhum Out
-              </p>
-            ) : (
+            {createdOuts.length === 0 ? <p className="text-center text-muted-foreground">Você ainda não criou nenhum Out</p> : (
               <div className="grid gap-4">
                 {createdOuts.map((out) => (
                   <Card key={out.id}>
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <CardTitle className="text-xl">{out.title}</CardTitle>
-                            {unreadCounts[out.id] && (
-                              <Badge variant="destructive" className="h-5 px-2">
-                                • {unreadCounts[out.id]} nova{unreadCounts[out.id] > 1 ? 's' : ''}
-                              </Badge>
-                            )}
-                          </div>
+                          <CardTitle className="text-xl">{out.title}</CardTitle>
                           <div className="flex items-center gap-2 mt-2">
-                            {(out.hobby || out.custom_hobby) && (
-                              <Badge variant="secondary">
-                                {out.hobby?.name || out.custom_hobby}
-                              </Badge>
-                            )}
+                            {out.hobby && <Badge variant="secondary">{out.hobby.name}</Badge>}
                             <Badge className="badge-mode">{getModeLabel(out.mode)}</Badge>
                           </div>
-                          {out.city && (
-                            <div className="flex items-center gap-1.5 text-sm text-[#6B6B6B] mt-2">
-                              <MapPin className="w-4 h-4" />
-                              {out.city}
-                              {nextSlots[out.id] && (
-                                <>
-                                  <span className="mx-1">•</span>
-                                  <span>{formatSlotDate(nextSlots[out.id])}</span>
-                                </>
-                              )}
-                            </div>
-                          )}
                         </div>
-                        <Button
-                          onClick={() => navigate(`/out/${out.id}/edit`)}
-                          variant="ghost"
-                          size="icon"
-                          title="Editar Out"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
+                        <Button onClick={() => navigate(`/out/${out.id}/edit`)} variant="ghost" size="icon"><Edit className="w-4 h-4" /></Button>
                       </div>
                     </CardHeader>
-                     <CardContent className="space-y-3">
-                      <PendingApplications 
-                        inviteId={out.id}
-                        onUpdate={loadData}
-                      />
-                      
+                    <CardContent className="space-y-3">
+                      <PendingApplications inviteId={out.id} />
                       <div className="flex gap-2">
-                        <Button
-                          onClick={() => navigate(`/out/${out.id}`)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          Ver detalhes
-                        </Button>
-                        <Button
-                          onClick={() => toggleExpanded(out.id)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          Mensagens
-                          {expandedOuts.has(out.id) ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <Button
-                          onClick={() => navigate(`/messages?invite_id=${out.id}`)}
-                          variant="ghost"
-                          size="sm"
-                        >
-                          Ver todas
-                        </Button>
+                        <Button onClick={() => navigate(`/out/${out.id}`)} variant="outline" size="sm">Ver detalhes</Button>
+                        <Button onClick={() => toggleExpanded(out.id)} variant="outline" size="sm" className="gap-2"><MessageCircle className="w-4 h-4" />Mensagens</Button>
                       </div>
-
-                      {expandedOuts.has(out.id) && (
-                        <OutMessagesBlock
-                          inviteId={out.id}
-                          onUnreadUpdate={() => loadUnreadCounts()}
-                        />
-                      )}
+                      {expandedOuts.has(out.id) && <OutMessagesBlock inviteId={out.id} />}
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
           </TabsContent>
-
           <TabsContent value="applications">
-            {loading ? (
-              <p className="text-center text-muted-foreground">Carregando...</p>
-            ) : applications.length === 0 ? (
-              <p className="text-center text-muted-foreground">
-                Você ainda não se candidatou a nenhum Out
-              </p>
-            ) : (
+            {applications.length === 0 ? <p className="text-center text-muted-foreground">Nenhuma candidatura</p> : (
               <div className="grid gap-4">
                 {applications.map((app) => (
                   <Card key={app.id}>
                     <CardHeader>
+                      <CardTitle className="text-xl">{app.invite?.title}</CardTitle>
                       <div className="flex items-center gap-2">
-                        <CardTitle className="text-xl">{app.invite.title}</CardTitle>
-                        {unreadCounts[app.invite.id] && (
-                          <Badge variant="destructive" className="h-5 px-2">
-                            • {unreadCounts[app.invite.id]} nova{unreadCounts[app.invite.id] > 1 ? 's' : ''}
-                          </Badge>
-                        )}
+                        {app.invite?.hobby && <Badge variant="secondary">{app.invite.hobby.name}</Badge>}
+                        <Badge variant={app.status === 'aceito' ? 'default' : 'secondary'}>{getStatusLabel(app.status)}</Badge>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {(app.invite.hobby || app.invite.custom_hobby) && (
-                          <Badge variant="secondary">
-                            {app.invite.hobby?.name || app.invite.custom_hobby}
-                          </Badge>
-                        )}
-                        <Badge className="badge-mode">{getModeLabel(app.invite.mode)}</Badge>
-                        <Badge variant={app.status === 'aceito' ? 'default' : 'secondary'}>
-                          {getStatusLabel(app.status)}
-                        </Badge>
-                      </div>
-                      {app.invite.city && (
-                        <div className="flex items-center gap-1.5 text-sm text-[#6B6B6B]">
-                          <MapPin className="w-4 h-4" />
-                          {app.invite.city}
-                          {nextSlots[app.invite.id] && (
-                            <>
-                              <span className="mx-1">•</span>
-                              <span>{formatSlotDate(nextSlots[app.invite.id])}</span>
-                            </>
-                          )}
-                        </div>
-                      )}
                     </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => navigate(`/out/${app.invite.id}`)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          Ver Out
-                        </Button>
-                        <Button
-                          onClick={() => toggleExpanded(app.invite.id)}
-                          variant="outline"
-                          size="sm"
-                          className="gap-2"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          Mensagens
-                          {expandedOuts.has(app.invite.id) ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <Button
-                          onClick={() => navigate(`/messages?invite_id=${app.invite.id}`)}
-                          variant="ghost"
-                          size="sm"
-                        >
-                          Ver todas
-                        </Button>
-                      </div>
-
-                      {expandedOuts.has(app.invite.id) && (
-                        <OutMessagesBlock
-                          inviteId={app.invite.id}
-                          onUnreadUpdate={() => loadUnreadCounts()}
-                        />
-                      )}
+                    <CardContent>
+                      <Button onClick={() => navigate(`/out/${app.invite_id}`)} variant="outline" size="sm">Ver Out</Button>
                     </CardContent>
                   </Card>
                 ))}
               </div>
             )}
           </TabsContent>
-
-          <TabsContent value="calendar">
-            <CalendarView />
-          </TabsContent>
+          <TabsContent value="calendar"><CalendarView /></TabsContent>
         </Tabs>
       </div>
     </Layout>
