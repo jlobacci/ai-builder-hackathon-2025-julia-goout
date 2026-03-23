@@ -1,196 +1,66 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { MOCK_INVITE_SLOTS, MOCK_INVITES, MOCK_APPLICATIONS } from '@/lib/mock-data';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Calendar, Clock, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Badge } from './ui/badge';
 
-interface UpcomingEvent {
-  id: number;
-  date: string;
-  start_time: string;
-  end_time: string;
-  invite_id: number;
-  invite: {
-    id: number;
-    title: string;
-    city: string;
-    mode: string;
-    author_id: string;
-  };
-  isAuthor: boolean;
-  applicationStatus?: string;
-}
-
 export const UpcomingEvents: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [events, setEvents] = useState<UpcomingEvent[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      loadUpcomingEvents();
-      // Auto-refresh every 60 seconds
-      const interval = setInterval(loadUpcomingEvents, 60000);
-      return () => clearInterval(interval);
-    }
-  }, [user]);
+  if (!user) return null;
 
-  const loadUpcomingEvents = async () => {
-    if (!user) return;
+  const today = new Date().toISOString().split('T')[0];
 
-    const today = new Date().toISOString().split('T')[0];
+  // Get slots for outs authored by user or where user is accepted applicant
+  const myInviteIds = MOCK_INVITES.filter(i => i.author_id === user.id).map(i => i.id);
+  const acceptedInviteIds = MOCK_APPLICATIONS
+    .filter(a => a.applicant_id === user.id && a.status === 'aceito')
+    .map(a => a.invite_id);
 
-    // Get slots for Outs created by user (as organizer)
-    const { data: authorSlots } = await supabase
-      .from('invite_slots')
-      .select(`
-        *,
-        invite:invites(id, title, city, mode, author_id)
-      `)
-      .gte('date', today)
-      .eq('invite.author_id', user.id)
-      .order('date', { ascending: true })
-      .order('start_time', { ascending: true })
-      .limit(10);
+  const relevantSlots = MOCK_INVITE_SLOTS
+    .filter(s => s.date >= today && (myInviteIds.includes(s.invite_id) || acceptedInviteIds.includes(s.invite_id)))
+    .sort((a, b) => a.date.localeCompare(b.date) || a.start_time.localeCompare(b.start_time))
+    .slice(0, 3);
 
-    // Get applications with accepted status
-    const { data: applications } = await supabase
-      .from('applications')
-      .select(`
-        status,
-        invite_id,
-        invite:invites(id, title, city, mode, author_id)
-      `)
-      .eq('applicant_id', user.id)
-      .eq('status', 'aceito');
-
-    const appliedInviteIds = applications?.map(a => a.invite_id) || [];
-
-    // Get slots for Outs user applied to (as applicant)
-    let applicantSlots: any[] = [];
-    if (appliedInviteIds.length > 0) {
-      const { data } = await supabase
-        .from('invite_slots')
-        .select(`
-          *,
-          invite:invites(id, title, city, mode, author_id)
-        `)
-        .gte('date', today)
-        .in('invite_id', appliedInviteIds)
-        .order('date', { ascending: true })
-        .order('start_time', { ascending: true })
-        .limit(10);
-
-      applicantSlots = data || [];
-    }
-
-    // Combine and mark slots with role badge
-    const allSlots: UpcomingEvent[] = [
-      ...(authorSlots?.map(s => ({
-        ...s,
-        isAuthor: true
-      })) || []),
-      ...(applicantSlots.map(s => {
-        const app = applications?.find(a => a.invite_id === s.invite_id);
-        return {
-          ...s,
-          isAuthor: false,
-          applicationStatus: app?.status
-        };
-      }) || [])
-    ];
-
-    // Sort by date and time
-    allSlots.sort((a, b) => {
-      const dateCompare = a.date.localeCompare(b.date);
-      if (dateCompare !== 0) return dateCompare;
-      return a.start_time.localeCompare(b.start_time);
-    });
-
-    // Filter out events with null invites (deleted invites) and take top 3
-    const validEvents = allSlots.filter(e => e.invite !== null);
-    
-    setEvents(validEvents.slice(0, 3));
-    setLoading(false);
-  };
+  if (relevantSlots.length === 0) return null;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
   };
 
-  const getModeLabel = (mode: string) => {
-    const labels = {
-      presencial: 'Presencial',
-      online: 'Online',
-      hibrido: 'Híbrido'
-    };
-    return labels[mode as keyof typeof labels] || mode;
-  };
-
-  if (loading) {
-    return null;
-  }
-
-  if (events.length === 0) {
-    return null;
-  }
-
   return (
     <Card>
       <CardHeader className="pb-3">
         <CardTitle className="text-base flex items-center gap-2">
-          <Calendar className="w-4 h-4" />
-          Próximos Eventos
+          <Calendar className="w-4 h-4" />Próximos Eventos
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {events.map((event) => (
-          <div
-            key={event.id}
-            onClick={() => navigate(`/out/${event.invite.id}`)}
-            className="p-3 rounded-lg border bg-card hover:bg-accent cursor-pointer transition-colors"
-          >
-            <div className="flex items-start justify-between gap-2 mb-2">
-              <h4 className="font-medium text-sm line-clamp-1">
-                {event.invite.title}
-              </h4>
-              {event.isAuthor ? (
-                <Badge variant="secondary" className="text-xs shrink-0">Organizador</Badge>
-              ) : (
-                <Badge className="text-xs shrink-0 bg-[hsl(var(--success))] hover:bg-[hsl(var(--success))]/90">Candidato</Badge>
-              )}
-            </div>
-            
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-3 h-3" />
-                <span>{formatDate(event.date)}</span>
-              </div>
-              
-              <div className="flex items-center gap-1.5">
-                <Clock className="w-3 h-3" />
-                <span>{event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)}</span>
-              </div>
-              
-              {event.invite.mode === 'presencial' && event.invite.city && (
-                <div className="flex items-center gap-1.5">
-                  <MapPin className="w-3 h-3" />
-                  <span className="truncate">{event.invite.city}</span>
-                </div>
-              )}
-              
-              {event.invite.mode !== 'presencial' && (
-                <Badge variant="outline" className="text-xs mt-1">
-                  {getModeLabel(event.invite.mode)}
+        {relevantSlots.map((slot) => {
+          const invite = MOCK_INVITES.find(i => i.id === slot.invite_id);
+          if (!invite) return null;
+          const isAuthor = invite.author_id === user.id;
+          return (
+            <div key={slot.id} onClick={() => navigate(`/out/${invite.id}`)}
+              className="p-3 rounded-lg border bg-card hover:bg-accent cursor-pointer transition-colors">
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <h4 className="font-medium text-sm line-clamp-1">{invite.title}</h4>
+                <Badge variant={isAuthor ? 'secondary' : 'default'} className="text-xs shrink-0">
+                  {isAuthor ? 'Organizador' : 'Candidato'}
                 </Badge>
-              )}
+              </div>
+              <div className="space-y-1 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1.5"><Calendar className="w-3 h-3" /><span>{formatDate(slot.date)}</span></div>
+                <div className="flex items-center gap-1.5"><Clock className="w-3 h-3" /><span>{slot.start_time} - {slot.end_time}</span></div>
+                {invite.city && <div className="flex items-center gap-1.5"><MapPin className="w-3 h-3" /><span>{invite.city}</span></div>}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </CardContent>
     </Card>
   );

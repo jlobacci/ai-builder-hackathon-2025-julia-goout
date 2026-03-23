@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { MOCK_PROFILES, MOCK_USER_HOBBIES } from '@/lib/mock-data';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Badge } from './ui/badge';
 import { Card, CardContent } from './ui/card';
@@ -9,38 +9,13 @@ import { useNavigate } from 'react-router-dom';
 export const ProfileCard: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<any>(null);
-  const [hobbies, setHobbies] = useState<any[]>([]);
 
-  useEffect(() => {
-    if (user) {
-      loadProfile();
-    }
-  }, [user]);
+  if (!user) return null;
 
-  const loadProfile = async () => {
-    if (!user) return;
-
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-
-    if (profileData) {
-      setProfile(profileData);
-
-      const { data: hobbiesData } = await supabase
-        .from('user_hobbies')
-        .select('*, hobbies(*)')
-        .eq('user_id', user.id)
-        .limit(5);
-
-      setHobbies(hobbiesData || []);
-    }
-  };
-
+  const profile = MOCK_PROFILES.find(p => p.user_id === user.id);
   if (!profile) return null;
+
+  const hobbies = MOCK_USER_HOBBIES.filter(uh => uh.user_id === user.id).slice(0, 5);
 
   return (
     <Card 
